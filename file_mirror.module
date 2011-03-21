@@ -1,0 +1,305 @@
+<?php
+// Download files from remote ftp and create nodes for every file.
+// Load module libraries
+require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.contents.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.ftp.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.files.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
+
+//defaults
+define('UPLOADSPERCRON', 10); //number of uploads to a particular mirror at every cron run
+define('FILE_STATUS_REMOTE', 500); //Extra file status definition for files only existing on remote mirrors
+
+//declare ftp connection;
+$connection = array();
+
+
+function file_mirror_cron() {
+  global $argv;  
+  if (!$argv[1]=='--mirror=1'){
+      watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
+  }else{
+  //upload files to mirror and updates the mirror file index in db
+    file_mirror_upload_contents();
+  //check for remote md5 hash (10 files)
+    file_mirror_check_md5(50);
+  }
+}
+
+function file_mirror_menu() {
+  $items = array();
+  $items['admin/settings/file-mirror/recheckdumb'] = array(
+    'title' => t('recheck dumb'),
+    'page callback' => 'file_mirror_recheck_dumb',
+    'access arguments' => array('administer file mirror'),
+  );
+  $items['admin/settings/file-mirror'] = array(
+    'title' => t('File Mirror'),
+    'page callback' => 'file_mirror_page_list',
+    'access arguments' => array('administer file mirror'),
+  );
+  $items['admin/reports/fixcron'] = array(
+    'title' => t('Fix cron'),
+    'page callback' => 'file_mirror_fix_cron',
+    'access arguments' => array('administer file mirror'),
+  );
+  $items['admin/settings/file-mirror/overview'] = array(
+    'title' => 'Overview',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access arguments' => array('administer file mirror'),
+    'weight' => 0,
+  );
+  $items['admin/settings/file-mirror/settings'] = array(
+    'title' => 'Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('file_mirror_settings_form'),
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('administer file mirror'),
+    'weight' => 0,
+  );
+  $items['admin/settings/file-mirror/add'] = array(
+    'title' => t('Add file mirror'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('file_mirror_edit_form'),
+    'access arguments' => array('create mirrors'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 100,
+  );
+  $items['admin/settings/file-mirror/%file_mirror'] = array(
+    'title callback' => 'file_mirror_page_title',
+    'title arguments' => array(3),
+    'page callback' => 'file_mirror_page_view',
+    'page arguments' => array(3),
+    'access arguments' => array('view', 3),
+    'access callback' => 'file_mirror_access',
+  );
+  $items['admin/settings/file-mirror/%file_mirror/folders'] = array(
+    'title' => 'Paths',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('file_mirror_folders_form',3),
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('update', 3),
+    'access callback' => 'file_mirror_access',
+  );
+  $items['admin/settings/file-mirror/%file_mirror/edit'] = array(
+    'title' => t('edit'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('file_mirror_edit_form',3),
+    'access arguments' => array('update', 3),
+    'access callback' => 'file_mirror_access',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 100,
+  );
+  $items['admin/settings/file-mirror/%file_mirror/check-contents'] = array(
+    'title' => t('Check contents'),
+    'page callback' => 'file_mirror_check_contents',
+    'page arguments' => array(3),
+    'access arguments' => array('update', 3),
+    'access callback' => 'file_mirror_access',
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/settings/file-mirror/%file_mirror/clean'] = array(
+    'title' => t('Clean mirror'),
+    'page callback' => 'file_mirror_check_delete_unknown',
+    'page arguments' => array(3),
+    'access arguments' => array('update', 3),
+    'access callback' => 'file_mirror_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/file-mirror/%file_mirror/index'] = array(
+    'title' => t('Index mirror contents'),
+    'page callback' => 'file_mirror_index_files_page',
+    'page arguments' => array(3),
+    'access arguments' => array('update', 3),
+    'access callback' => 'file_mirror_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/file-mirror/%file_mirror/cleanindex'] = array(
+    'title' => t('Clean file index'),
+    'page callback' => 'file_mirror_clean_index_page',
+    'page arguments' => array(3),
+    'access arguments' => array('update', 3),
+    'access callback' => 'file_mirror_access',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function file_mirror_perm() {
+  return array('administer file mirror',
+               'create mirrors',
+               'edit own mirror',
+               'view own mirror',
+               'view any mirror',
+               'delete own mirror');
+}
+/**
+* Implementation of hook_block().
+*/
+function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0]['info'] = t('Philosophical Quotes');
+      return $blocks;
+    case 'view':
+      $blocks['subject'] = t('Download locations');
+      $blocks['content'] = 'content';
+      return $blocks;
+  }
+}
+//implementation of hook_nodeapi
+//adds filemirror data to $node with attachment files or filefields
+function file_mirror_nodeapi(&$node, $op, $teaser) {
+  $result = array();
+  switch ($op) {
+    case 'view' :
+      //load and attach author information
+      //$user = user_load(array('uid' = $node->author));
+      
+      //get all file attachments
+      if (isset($node->files) && count($node->files) && user_access('view uploaded files') && !$teaser) {
+          foreach ($node->files as $key => $file_attachment)
+            {
+              //attach mirror data to the file attachment array
+              $node->files[$key]->mirrors = file_mirror_get_fid_mirrors($file_attachment->fid);
+              $node->files[$key]->default_mirror = file_mirror_get_fid_defaultMirror($file_attachment->fid);
+            }
+      }
+      //get all filefield files
+      if (module_exists('filefield'))
+      {
+        foreach (filefield_get_field_list($node->type) as $fieldname => $filefield_data)
+        {
+          if (count($node->$fieldname)) {
+            foreach($node->$fieldname as &$filefield)
+            {
+              //attach mirror data to the filefield array
+              $filefield['mirrors'] = file_mirror_get_fid_mirrors($filefield['fid']);
+              $filefield['default_mirror'] = file_mirror_get_fid_defaultMirror($filefield['fid']);
+            }
+          }
+        }
+      }
+      break;
+  }
+}
+
+
+//get all mirror file data by fid
+function file_mirror_get_fid_mirrors($fid) {
+  $q = db_query("SELECT * FROM {file_mirror_files} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.active = 1 AND fm.fid = %d AND f.active=1", array($fid));
+  while ($records = db_fetch_object($q))
+  {
+    $array[] = $records;
+  }
+  $q = db_query("SELECT * FROM {file_mirror_files2} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.fid = %d AND f.active=1", array($fid));
+  while ($records = db_fetch_object($q))
+  {
+    $array[] = $records;
+  }
+  $records = db_fetch_object(db_query("SELECT 'Main server' as title, 'Czech Republic' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
+  $records->path = str_replace(file_directory_path(), '', $records->path);
+  $records->path = 'downloadmain/'.$fid;
+  $array[] = $records;
+  shuffle($array);
+  
+  return $array;
+}
+
+//returns a random filemirror
+//should change this later into the preferred mirror to the client
+function file_mirror_get_fid_defaultMirror($fid) {
+  $q = db_query("SELECT * FROM {file_mirror_files} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.active = 1 AND fm.fid = %d ORDER BY RAND() LIMIT 0,1", array($fid));
+  while ($records = db_fetch_object($q))
+  {
+    $array[] = $records;
+  }
+  $q = db_query("SELECT * FROM {file_mirror_files2} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.fid = %d ORDER BY RAND() LIMIT 0,1", array($fid));
+  while ($records = db_fetch_object($q))
+  {
+    $array[] = $records;
+  }
+  $records = db_fetch_object(db_query("SELECT 'Main server' as title, 'Netherlands' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
+  $records->path = str_replace(file_directory_path(), '', $records->path);
+  $records->path = 'downloadmain/'.$fid;
+  $array[] = $records;
+  
+  shuffle($array);
+
+  return $array;
+}
+
+
+
+/**
+* Menu callback; loads a file mirror object
+*/
+function file_mirror_load($fmid) {
+  if (!is_numeric($fmid)) {
+    return FALSE;
+  }
+  $mirror = db_fetch_object(db_query('SELECT * FROM {file_mirror} WHERE fmid = %d', $fmid));
+  return $mirror;
+}
+
+/**
+ * Title callback.
+ */
+function file_mirror_page_title($file_mirror) {
+  return $file_mirror->title;
+}
+
+function file_mirror_access($op, $file_mirror, $account = NULL) {
+  
+  $user = $account;
+    
+  if (!$file_mirror || !in_array($op, array('view', 'update', 'delete', 'create'), TRUE)) {
+    // If there was no node to check against, or the $op was not one of the
+    // supported ones, we return access denied.
+    return FALSE;
+  }
+  
+  if (user_access('administer file mirror')) {
+    //return TRUE;
+  }
+  
+  if ($op != 'create') {
+    return user_access('create mirrors');
+  }
+  
+  if ($op == 'update') {
+    if (user_access('edit own mirror') && ($user->uid == $file_mirror->uid)) {
+      return true;
+    }
+  }
+  
+  if ($op == 'delete') {
+    if (user_access('delete own mirror') && ($user->uid == $file_mirror->uid)) {
+      return true;
+    }
+  }
+  
+  if ($op == 'create') {
+    return user_access('create mirrors');
+  }
+  
+  if ($op == 'view') {
+    if (user_access('view own mirror') && ($user->uid == $file_mirror->uid)) {
+      return true;
+    }
+    return user_access('view any mirror');
+
+  }
+  return false;
+}
+
+function file_mirror_fix_cron() {
+  $q = db_query("DELETE FROM `variable` WHERE name = 'cron_semaphore'");
+  $q = db_query("DELETE FROM `variable` WHERE name = 'cron_last'");
+  $q = db_query("DELETE FROM `variable` WHERE name = 'cron_threshold_semaphore'");
+  return "fixed";
+}
+
+ 
+

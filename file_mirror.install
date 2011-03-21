@@ -1,0 +1,112 @@
+<?php
+
+function file_mirror_schema() {
+    $schema = array();
+    $schema['file_mirror'] = array(
+        'fields' => array(
+            'fmid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
+            'title' => array('type' => 'text','size' => 'small'),
+            'description' => array('type' => 'text','size' => 'normal'),
+            'country' => array('type' => 'text','size' => 'small'),
+            'ftp_url' => array('type' => 'text','size' => 'small'),
+            'ftp_user' => array('type' => 'text','size' => 'small'),
+            'ftp_pass' => array('type' => 'text','size' => 'small'),
+            'ftp_dir' => array('type' => 'text','size' => 'small'),
+            'ftp_passive' => array('type' => 'int','size' => 'tiny'),
+            'ftp_port' => array('type' => 'int','size' => 'tiny'),
+            'url_prefix' => array('type' => 'text','size' => 'small'),
+            'url_deamon' => array('type' => 'text','size' => 'small'),
+            'uid' => array('type' => 'int','size' => 'tiny'),
+            'mirror_size' => array('type' => 'int','size' => 'normal'),
+            'fill' => array('type' => 'int','size' => 'big'),
+            'bandwidth_limit' => array('type' => 'int','size' => 'normal'),
+            'active' => array('type' => 'int','size' => 'tiny'),
+            'flat' => array('type' => 'int','size' => 'tiny'),
+            'dynamic' => array('type' => 'int','size' => 'tiny'),
+            'mbw' => array('type' => 'int','size' => 'big'),
+            'mbw_month' => array('type' => 'int','size' => 'tiny'),
+            'tbw' => array('type' => 'int','size' => 'big'),
+            'created' => array('type' => 'datetime'),
+            'changed' => array('type' => 'datetime'),
+            'lastupload' => array('type' => 'datetime'),
+        ),
+        'primary key' => array('fmid'),
+        'unique keys' => array('fmid' => array('fmid')),
+        'foreign keys' => array(
+            'mirror_author' => array(
+                'table' => 'users',
+                'columns' => array('uid' => 'uid'),
+                ),
+        ),
+    );
+    $schema['file_mirror_files'] = array(
+        'fields' => array(
+            'fmfid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
+            'fmid' => array('type' => 'int','size' => 'tiny'),
+            'fid' => array('type' => 'int','size' => 'normal'),
+            'path' => array('type' => 'text','size' => 'small'),
+            'md5check' => array('type' => 'datetime'),
+            'active' => array('type' => 'int','size' => 'tiny'),
+            'status' => array('type' => 'int','size' => 'tiny'),
+            'changed' => array('type' => 'datetime'),
+        ),
+        'primary key' => array('fmfid'),
+        'unique keys' => array('fmfid' => array('fmfid')),
+        'foreign keys' => array(
+            'file_mirror_id' => array(
+                'table' => 'file_mirror',
+                'columns' => array('fmid' => 'fmid'),
+                ),
+            'file_id' => array(
+                'table' => 'files',
+                'columns' => array('fid' => 'fid'),
+                ),
+        ),
+    );
+    $schema['file_mirror_files2'] = array(
+        'fields' => array(
+            'fmfid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
+            'fmid' => array('type' => 'int','size' => 'tiny'),
+            'fid' => array('type' => 'int','size' => 'normal'),
+            'path' => array('type' => 'text','size' => 'small'),
+            'changed' => array('type' => 'datetime'),
+        ),
+        'primary key' => array('fmfid'),
+        'unique keys' => array('fmfid' => array('fmfid')),
+        'foreign keys' => array(
+            'file_mirror_id' => array(
+                'table' => 'file_mirror',
+                'columns' => array('fmid' => 'fmid'),
+                ),
+            'file_id' => array(
+                'table' => 'files',
+                'columns' => array('fid' => 'fid'),
+                ),
+        ),
+    );
+    $schema['file_mirror_paths'] = array(
+        'fields' => array(
+            'fmpid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
+            'fmid' => array('type' => 'int','size' => 'tiny'),
+            'path' => array('type' => 'text','size' => 'small','not null' => TRUE),
+        ),
+        'primary key' => array('fmpid'),
+        'unique keys' => array('fmpid' => array('fmpid')),
+        'foreign keys' => array(
+            'file_mirror_id' => array(
+                'table' => 'file_mirror',
+                'columns' => array('fmid' => 'fmid'),
+                ),
+        ),
+    );
+    return $schema;
+}
+
+function file_mirror_install() {
+    drupal_install_schema('file_mirror');
+}
+
+function file_mirror_uninstall() {
+    drupal_uninstall_schema('file_mirror');
+}
+

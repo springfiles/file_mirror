@@ -1,0 +1,7 @@
+; $Id: file_mirror.info,v 1.0 2010/11/01 13:50:00 jobjol Exp $
+name = File Mirror
+description = Creates file mirrors
+core = 6.x
+package = Other
+
+
