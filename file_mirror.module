@@ -10,21 +10,22 @@ require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
 //defaults
 define('UPLOADSPERCRON', 10); //number of uploads to a particular mirror at every cron run
 define('FILE_STATUS_REMOTE', 500); //Extra file status definition for files only existing on remote mirrors
+define('MIRROR_PATH', 'sites/default/files/downloads/'); //path with files that will be mirrored
 
 //declare ftp connection;
 $connection = array();
 
 
 function file_mirror_cron() {
-  global $argv;  
-  if (!$argv[1]=='--mirror=1'){
-      watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
-  }else{
-  //upload files to mirror and updates the mirror file index in db
-    file_mirror_upload_contents();
-  //check for remote md5 hash (10 files)
-    file_mirror_check_md5(50);
-  }
+	global $argv;  
+  	if (!$argv[1]=='--mirror=1'){
+		watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
+	}else{
+	//upload files to mirror and updates the mirror file index in db
+	file_mirror_upload_contents();
+	//check for remote md5 hash
+	file_mirror_check_md5(50);
+	}
 }
 
 function file_mirror_menu() {
@@ -182,6 +183,20 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
         }
       }
       break;
+		case 'insert':
+		case 'update':{ //check if file will be uploaded to other mirrors, if so create file to notify local cron job
+			if (intval($node->field_file[0]['fid'])>0){
+				$pos=strpos($node->field_file[0][filepath], MIRROR_PATH);
+				if ($pos!==false){
+					if ($pos==0){
+						$touchfile=MIRROR_PATH."./.modified";
+						watchdog("filemirror", "file ".$node->field_file[0]['fid']." ".$node->field_file[0][filepath]." was uploaded, notifying system cron with ".$touchfile);
+						touch($touchfile);
+					}
+				}
+			break;
+		}
+	}
   }
 }
 

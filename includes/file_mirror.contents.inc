@@ -77,16 +77,13 @@ function get_files_to_upload($mirrorid,$maxfiles){
 		AND filepath LIKE '%s'
 		ORDER BY TIMESTAMP DESC
 		LIMIT 0,%d",
-			array($mirrorid,"sites/default/files/downloads/%",$maxfiles));
+			array($mirrorid,MIRROR_PATH."%",$maxfiles));
 	$res=array();
 	while ($record = db_fetch_array($q)){
 		$res[]=$record;
 	}
 	return $res;
 }
-
-
-
 
 function file_mirror_clean_index_page($file_mirror)
 {
