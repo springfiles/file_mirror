@@ -105,8 +105,7 @@ function file_mirror_settings_form($form_state = NULL) {
 }
 
 function file_mirror_settings_form_submit($form_id, $form_values) {
-  db_query("TRUNCATE {file_mirror_paths}");
-  dsm($form_values);
+  db_query("DELETE FROM {file_mirror_paths} WHERE fmid IS NULL");
   $record = (object) NULL;
   foreach ($form_values['values'] as $key => $value)
   {
@@ -133,7 +132,7 @@ function file_mirror_folders_form($form_state = NULL, $file_mirror) {
    }
    if (count($folders) == 0) $folders = $default;
    $count = count($folders);
-   dsm($folders);
+   //dsm($folders);
    $form['fmid'] = array(
       '#type' => 'value',
       '#default_value' => $file_mirror->fmid,

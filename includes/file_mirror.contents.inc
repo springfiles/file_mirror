@@ -71,17 +71,34 @@ function file_mirror_upload_contents() {
  */
 
 function get_files_to_upload($mirrorid,$maxfiles){
-	$q=db_query("SELECT fid, filename, filepath FROM files AS f
-		WHERE f.fid not in ( SELECT fid FROM
-		file_mirror_files WHERE fmid=%d)
-		AND filepath LIKE '%s'
-		ORDER BY TIMESTAMP DESC
-		LIMIT 0,%d",
-			array($mirrorid,MIRROR_PATH."%",$maxfiles));
-	$res=array();
-	while ($record = db_fetch_array($q)){
-		$res[]=$record;
+	$paths=array();
+	//get mirror paths and get all files uploaded 
+	$q=db_query("SELECT path from {file_mirror_paths}
+		WHERE fmid = %d",array($mirrorid));
+	while($record = db_fetch_array($q)){
+		$paths[]=$record['path'];
 	}
+	if (count($paths)==0){ //no path found, use default one
+		$q=db_query("SELECT path from {file_mirror_paths}
+				WHERE fmid IS NULL");
+		while($record = db_fetch_array($q)){
+			$paths[]=$record['path'];
+		}
+	}
+	$res=array();
+	foreach($paths as $path){
+		watchdog("filemirror", "$path");
+		$q=db_query("SELECT fid, filename, filepath FROM files AS f
+			WHERE f.fid not in ( SELECT fid FROM
+			file_mirror_files WHERE fmid=%d)
+			AND filepath LIKE '%s'
+			ORDER BY TIMESTAMP DESC
+			LIMIT 0,%d",
+				array($mirrorid,$path."%",$maxfiles));
+		while ($record = db_fetch_array($q)){
+			$res[]=$record;
+		}
+ 	}
 	return $res;
 }
 
