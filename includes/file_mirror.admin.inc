@@ -229,7 +229,7 @@ function file_mirror_edit_form($form_state = NULL, $file_mirror = NULL) {
   );
   
   $form['ftp_pass'] = array(
-    '#type' => 'password',
+    '#type' => 'textfield',
     '#title' => t('Password'),
     '#maxlength' => 64,
     '#size' => 15,
