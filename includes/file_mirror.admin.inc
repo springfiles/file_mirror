@@ -233,6 +233,7 @@ function file_mirror_edit_form($form_state = NULL, $file_mirror = NULL) {
     '#title' => t('Password'),
     '#maxlength' => 64,
     '#size' => 15,
+    '#default_value' => $file_mirror->ftp_pass,
   );
   
   $form['ftp_passive'] = array(
