@@ -26,9 +26,9 @@ function file_mirror_upload_contents() {
 	$i=0;
 	//get all dynamic and active mirrors
 	$q = db_query("SELECT * FROM {file_mirror} WHERE dynamic = 1 AND active = 1 ORDER BY lastupload");
-	$bytes=0;
 	while ($file_mirror = db_fetch_object($q)){
 		$start=time();
+		$bytes=0;
 		db_query("UPDATE {file_mirror} SET lastupload=NOW() WHERE fmid=%d", array($file_mirror->fmid));
 		$files=get_files_to_upload($file_mirror->fmid,UPLOADSPERCRON);
 		if (count($files)<=0){ //use next mirror if no files are to upload
