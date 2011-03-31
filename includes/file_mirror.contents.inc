@@ -35,7 +35,7 @@ function file_mirror_upload_contents() {
 			continue; //skip to next mirror
 		}
 		watchdog('filemirror','Connecting to '.$mirror->title);
-		$con=file_mirror_ftp_connect($mirror->ftp_url, $mirror->ftp_port, $mirror->ftp_user, $mirror->ftp_pass, $mirror->ftp_passive, $mirror->ftp_dir);
+		$con=file_mirror_ftp_connect($mirror->ftp_url, $mirror->ftp_port, $mirror->ftp_user, $mirror->ftp_pass, $mirror->ftp_passive, $mirror->ftp_ssl, $mirror->ftp_dir);
 		if ($con===false)
 			continue;//couldn't connect to ftp, next mirror
 		$pos=1;

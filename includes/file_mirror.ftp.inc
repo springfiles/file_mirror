@@ -11,7 +11,7 @@
  * @return connection handle, false on error
  */
 
-function file_mirror_ftp_connect($host,$port, $username, $password, $passive, $dir){
+function file_mirror_ftp_connect($host,$port, $username, $password, $passive,$ssl, $dir){
 	if($port==0)
 		$port=21;
 	if($passive==0)
@@ -20,7 +20,11 @@ function file_mirror_ftp_connect($host,$port, $username, $password, $passive, $d
 		$username="anonymous";
 	$timeout=15;
 	// build the ftp connection
-	$con = ftp_connect($host, $port, $timeout);
+	if(intval($ssl)==1){
+		$con = ftp_ssl_connect($host, $port, $timeout);
+	}else{
+		$con = ftp_connect($host, $port, $timeout);
+	}
 	if ($con===false){
 		watchdog("filemirror", "Error connecting to $host");
 		return false;
