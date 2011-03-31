@@ -22,13 +22,11 @@ function file_mirror_check_md5($amount=10){
 		if ($md5 == $query->md5){
 			//md5sum valid
 			db_query("UPDATE {file_mirror_files} SET md5check = NOW(), active = 1, changed = NOW() WHERE fmfid = %d", array($query->fmfid));
-			$valid += 1;
+			$valid++;
 		}else {
 			watchdog('filemirror', "Invalid file ".$query->path." md5:  ".$md5.", deleted from db on site: ".$query->url_prefix);
 			db_query("DELETE FROM {file_mirror_files} WHERE fmfid = %d", array($query->fmfid));
-// TODO:set status -> delete files with status 2 by ftp + remove then database entry
-//		db_query("UPDATE FROM {file_mirror_files} WHERE fmfid = %d SET (status) VALUES(2)");
-			$deleted +=1;
+			$deleted++;
 		}
 		$count++;
 	}
