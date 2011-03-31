@@ -25,22 +25,19 @@ function file_mirror_ftp_connect($host,$port, $username, $password, $passive, $d
 		watchdog("filemirror", "Error connecting to $host");
 		return false;
 	}
-	$res = ftp_login($con, $username, $password);
-	if ($res===false){
+	if (!ftp_login($con, $username, $password)){
 		watchdog("filemirror", "Error login on $host, password/username wrong?");
 		return false;
 	}
 	if ($passive) {
-		$res=ftp_pasv($con, true);
-		if ($res===false){
+		if(!ftp_pasv($con, true)){
 			watchdog("filemirror", "Error setting passive mode on $host");
 			return false;
 		}
 
 	}
 	if(strlen($dir)>0){
-		$res=ftp_chdir($con, $dir);
-		if ($res===false){
+		if(!ftp_chdir($con, $dir)){
 			watchdog("filemirror", "Error chdir() to $dir");
 			return false;
 		}
@@ -95,15 +92,15 @@ function file_mirror_ftp_get_files(&$connection, $file_mirror, $directory, $recu
 				if (preg_match("/.*\/(.*)$/", dirname($ftp_file['filepath']), $user)) {
 					$ftp_file['user_name'] = $user[1];
 				}
-			  // is this a directory?
-	      if ($matches[2] && $matches[2] != 1 && $recursive) {
-	        $ftp_file['dir'] = file_mirror_ftp_get_files($connection, $file_mirror, $directory .'/'. $ftp_file['filename'], $recursive - 1);
-	      }
+				// is this a directory?
+				if ($matches[2] && $matches[2] != 1 && $recursive) {
+					$ftp_file['dir'] = file_mirror_ftp_get_files($connection, $file_mirror, $directory .'/'. $ftp_file['filename'], $recursive - 1);
+				}
 			}
-      // if we have a file listing, append it
-      if ($ftp_file) {
-      	$files[] = $ftp_file;
-      }
+			// if we have a file listing, append it
+			if ($ftp_file) {
+				$files[] = $ftp_file;
+			}
 		}
 	}
 	return $files;
