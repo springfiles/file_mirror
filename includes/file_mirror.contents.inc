@@ -47,7 +47,10 @@ function file_mirror_upload_contents() {
 			watchdog('filemirror',$pos.'/'.count($files).' '.basename($srcfile)." ".round($filesize/(1024*1024),1)." MB ($srcfile->$dstfile)");
 			if (file_mirror_ftp_put($con, $srcfile, $dstfile)){
 				//insert into database, set date to 0 -> will be checked immidetly
-				db_query("INSERT INTO {file_mirror_files} (fmid, fid, active, path, changed ) VALUES(%d, %d, %d, '%s', 0 )", array($mirror->fmid, $missing['fid'], 1, $dstfile));
+				db_query("INSERT INTO {file_mirror_files}
+					(fmid, fid, active, path, changed, size )
+					VALUES(%d, %d, %d, '%s', 0, %d )",
+					array($mirror->fmid, $missing['fid'], 1, $dstfile, $filesize));
 				//verify file
 				file_mirror_check_md5(10);
 			}else{
