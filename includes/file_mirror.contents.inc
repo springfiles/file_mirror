@@ -52,6 +52,8 @@ function file_mirror_upload_contents() {
 			$pos++;
 		}
 		ftp_close($connection['ftp_connection']);
+		unset($connection);
+		unset($GLOBALS['connection']);
 		$timediff=time()-$start;
 		if ($timediff>0)
 			watchdog('filemirror', "Transfered ".round($bytes/(1024*1024),1)." MB at ".round($bytes/($timediff*1024),1)."KB/s");
