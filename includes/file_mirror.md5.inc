@@ -26,7 +26,7 @@ function file_mirror_check_md5($amount=10){
 		}
 		if ($md5 == $query->md5){
 			//md5sum valid
-			db_query("UPDATE {file_mirror_files} SET md5check = NOW(), active = 1, changed = NOW() WHERE fmfid = %d", array($query->fmfid));
+			db_query("UPDATE {file_mirror_files} SET md5check = NOW(), active = 1, changed = NOW(), md5='%s' WHERE fmfid = %d", array($query->fmfid, $query->md5));
 			$valid++;
 		}else {
 			watchdog('filemirror', "Invalid file ".$query->path." md5:  ".$md5.", deleted from db on site: ".$query->url_prefix);

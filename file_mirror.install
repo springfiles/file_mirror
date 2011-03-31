@@ -45,6 +45,7 @@ function file_mirror_schema() {
             'fmid' => array('type' => 'int','size' => 'tiny'),
             'fid' => array('type' => 'int','size' => 'normal'),
             'path' => array('type' => 'text','size' => 'small'),
+            'md5' => array('type' => 'text', 'size' => 'small'),
             'md5check' => array('type' => 'datetime'),
             'active' => array('type' => 'int','size' => 'tiny'),
             'status' => array('type' => 'int','size' => 'tiny'),
