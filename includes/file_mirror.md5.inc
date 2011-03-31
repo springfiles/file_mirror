@@ -9,7 +9,7 @@ function file_mirror_check_md5($amount=10){
 		WHERE (f.md5check IS NULL OR (f.md5check < NOW() - INTERVAL 1 YEAR))
 		AND m.url_deamon IS NOT NULL 
 		AND h.md5 IS NOT NULL
-		ORDER BY CHANGED
+		ORDER BY CHANGED ASC
 		limit 0, %d", array($amount));
 	$valid=0;
 	$deleted=0;
@@ -20,7 +20,8 @@ function file_mirror_check_md5($amount=10){
 		$md5 = file_get_contents($url);
 		if ($md5===false){
 			watchdog('filemirror', $url." returned '".$md5."' is deamon.php missing/defect on mirror?");
-			db_query("UPDATE {file_mirror_files} SET changed = NOW() WHERE fmfid = %d", array($query->fmfid));
+			//mark all files on this mirror as changed to skip md5check, if other files are waiting for validating
+			db_query("UPDATE {file_mirror_files} SET changed = NOW() WHERE fmid = %d AND md5 IS NULL ", array($query->fmid));
 			break;
 		}
 		if ($md5 == $query->md5){
