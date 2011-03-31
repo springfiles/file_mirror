@@ -27,8 +27,8 @@ function file_mirror_upload_contents() {
 	//get all dynamic and active mirrors
 	$q = db_query("SELECT * FROM {file_mirror} WHERE dynamic = 1 AND active = 1 ORDER BY lastupload");
 	$bytes=0;
-	$start=time();
 	while ($file_mirror = db_fetch_object($q)){
+		$start=time();
 		db_query("UPDATE {file_mirror} SET lastupload=NOW() WHERE fmid=%d", array($file_mirror->fmid));
 		$files=get_files_to_upload($file_mirror->fmid,UPLOADSPERCRON);
 		if (count($files)<=0){ //use next mirror if no files are to upload
@@ -52,10 +52,10 @@ function file_mirror_upload_contents() {
 			$pos++;
 		}
 		ftp_close($connection['ftp_connection']);
+		$timediff=time()-$start;
+		if ($timediff>0)
+			watchdog('filemirror', "Transfered ".round($bytes/(1024*1024),1)." MB at ".round($bytes/($timediff*1024),1)."KB/s");
 	}
-	$timediff=time()-$start;
-	if ($timediff>0)
-		watchdog('filemirror', "Transfered ".round($bytes/(1024*1024),1)." MB at ".round($bytes/($timediff*1024),1)."KB/s");
 }
 
 /**
