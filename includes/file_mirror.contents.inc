@@ -28,10 +28,10 @@ function file_mirror_upload_contents() {
 	while ($mirror = db_fetch_object($q)){
 		$start=time();
 		$bytes=0;
-		db_query("UPDATE {file_mirror} SET lastupload=NOW() WHERE fmid=%d", array($file_mirror->fmid));
-		$files=get_files_to_upload($file_mirror->fmid,UPLOADSPERCRON);
+		db_query("UPDATE {file_mirror} SET lastupload=NOW() WHERE fmid=%d", array($mirror->fmid));
+		$files=get_files_to_upload($mirror->fmid,UPLOADSPERCRON);
 		if (count($files)<=0){ //use next mirror if no files are to upload
-			watchdog('filemirror',"Is up to date: ".$file_mirror->title);
+			watchdog('filemirror',"Is up to date: ".$mirror->title);
 			continue; //skip to next mirror
 		}
 		watchdog('filemirror','Connecting to '.$mirror->title);
@@ -41,17 +41,18 @@ function file_mirror_upload_contents() {
 		$pos=1;
 		foreach ($files as $missing ){
 			$dstfile=substr($missing['filepath'],strlen(file_directory_path())+1); //remove local prefix (usally sites/default/files
+			$srcfile=$missing['filepath'];
 			$filesize=filesize($missing['filepath']);
 			$bytes+=$filesize;
-			watchdog('filemirror',$pos.'/'.count($files).' '.basename($missing['filepath'])." ".round($filesize/(1024*1024),1)." MB to ".dirname($missing['filepath']));
-			if (file_mirror_ftp_put($con, $missing['filepath'], $file_mirror->ftp_dir.'/'.$dstfile)){
+			watchdog('filemirror',$pos.'/'.count($files).' '.basename($srcfile)." ".round($filesize/(1024*1024),1)." MB ($srcfile->$dstfile)");
+			if (file_mirror_ftp_put($con, $srcfile, $dstfile)){
 				//insert into database, set date to 0 -> will be checked immidetly
-				db_query("INSERT INTO {file_mirror_files} (fmid, fid, active, path, changed ) VALUES(%d, %d, %d, '%s', 0 )", array($file_mirror->fmid, $missing['fid'], 1, $dstfile));
+				db_query("INSERT INTO {file_mirror_files} (fmid, fid, active, path, changed ) VALUES(%d, %d, %d, '%s', 0 )", array($mirror->fmid, $missing['fid'], 1, $dstfile));
 				//verify file
 				file_mirror_check_md5(10);
 			}else{
 				//upload failed, next mirror
-				continue;
+				break;
 			}
 			$pos++;
 		}

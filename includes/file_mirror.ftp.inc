@@ -132,16 +132,15 @@ function file_mirror_ftp_completed_file_list(&$connection, $directory) {
 * @param filename file to upload
 */
 function file_mirror_ftp_put($con, $src_file, $dst_file) {
-	$localfile=file_directory_path().$src_file;
-	if (!is_readable($localfile)){
-		watchdog('filemirror', "couldn't read file for upload: ".$localfile);
+	if (!is_readable($src_file)){
+		watchdog('filemirror', "couldn't read file for upload: ".$src_file);
 		return false;
 	}
 	@ftp_delete($con, $dst_file); //delete possible existing file / directory
 	@ftp_rmdir($con, $dst_file);
 	@ftp_mkdir($con, dirname($dst_file));
-	if (!ftp_put($con, $dst_file, $localfile, FTP_BINARY)){
-	    watchdog('filemirror', "upload ". $localfile." failed");
+	if (!ftp_put($con, $dst_file, $src_file, FTP_BINARY)){
+	    watchdog('filemirror', "upload $src_file to $dst_file failed");
 	}
 	return true;
 }
