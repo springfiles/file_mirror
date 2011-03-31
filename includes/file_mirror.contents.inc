@@ -49,7 +49,7 @@ function file_mirror_upload_contents() {
 			}
 			$pos++;
 		}
-		ftp_close($connection);
+		ftp_close($connection['ftp_connection']);
 	}
 	$timediff=time()-$start;
 	if ($timediff>0)
