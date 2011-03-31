@@ -46,6 +46,8 @@ function file_mirror_upload_contents() {
 			if (file_mirror_ftp_putAll($connection['ftp_connection'], $missing['filepath'], $file_mirror->ftp_dir.'/'.$dstfile)){
 				//insert into database, set date to 0 -> will be checked immidetly
 				db_query("INSERT INTO {file_mirror_files} (fmid, fid, active, path, changed ) VALUES(%d, %d, %d, '%s', 0 )", array($file_mirror->fmid, $missing['fid'], 1, $dstfile));
+				//verify file
+				file_mirror_check_md5(10);
 			}
 			$pos++;
 		}

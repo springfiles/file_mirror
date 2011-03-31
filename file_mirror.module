@@ -21,6 +21,8 @@ function file_mirror_cron() {
   	if (!$argv[1]=='--mirror=1'){
 		watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
 	}else{
+	//check for remote md5 hash
+	file_mirror_check_md5(50);
 	//upload files to mirror and updates the mirror file index in db
 	file_mirror_upload_contents();
 	//check for remote md5 hash
