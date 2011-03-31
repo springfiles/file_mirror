@@ -1,8 +1,8 @@
 <?php
 
-function file_mirror_check_contents($file_mirror)
-{
-    global $connection;
+function file_mirror_check_contents($file_mirror){
+	global $connection;
+	return "file_mirror_check_contents disabled";
     $match = file_mirror_check_filelist($file_mirror, 'intersect');
     $output .= t('Known files found on mirror: ').count($match);
     $output .= '<br />'.t('Unknown files found on mirror: ').count(file_mirror_check_filelist($file_mirror, 'diff'));
@@ -22,11 +22,10 @@ function file_mirror_check_contents($file_mirror)
  * upload files to mirror and add the uploaded files to the mirror file index in db
  */
 function file_mirror_upload_contents() {
-	global $connection;
 	$i=0;
 	//get all dynamic and active mirrors
 	$q = db_query("SELECT * FROM {file_mirror} WHERE dynamic = 1 AND active = 1 ORDER BY lastupload");
-	while ($file_mirror = db_fetch_object($q)){
+	while ($mirror = db_fetch_object($q)){
 		$start=time();
 		$bytes=0;
 		db_query("UPDATE {file_mirror} SET lastupload=NOW() WHERE fmid=%d", array($file_mirror->fmid));
@@ -35,15 +34,17 @@ function file_mirror_upload_contents() {
 			watchdog('filemirror',"Is up to date: ".$file_mirror->title);
 			continue; //skip to next mirror
 		}
-		watchdog('filemirror','Connecting to '.$file_mirror->title);
-		file_mirror_ftp_connect($file_mirror);
+		watchdog('filemirror','Connecting to '.$mirror->title);
+		$con=file_mirror_ftp_connect($mirror->ftp_url, $mirror->ftp_port, $mirror->ftp_user, $mirror->ftp_pass, $mirror->ftp_passive, $mirror->ftp_dir);
+		if ($con===false)
+			continue;//couldn't connect to ftp, next mirror
 		$pos=1;
 		foreach ($files as $missing ){
 			$dstfile=substr($missing['filepath'],strlen(file_directory_path())+1); //remove local prefix (usally sites/default/files
 			$filesize=filesize($missing['filepath']);
 			$bytes+=$filesize;
 			watchdog('filemirror',$pos.'/'.count($files).' '.basename($missing['filepath'])." ".round($filesize/(1024*1024),1)." MB to ".dirname($missing['filepath']));
-			if (file_mirror_ftp_putAll($connection['ftp_connection'], $missing['filepath'], $file_mirror->ftp_dir.'/'.$dstfile)){
+			if (file_mirror_ftp_put($con, $missing['filepath'], $file_mirror->ftp_dir.'/'.$dstfile)){
 				//insert into database, set date to 0 -> will be checked immidetly
 				db_query("INSERT INTO {file_mirror_files} (fmid, fid, active, path, changed ) VALUES(%d, %d, %d, '%s', 0 )", array($file_mirror->fmid, $missing['fid'], 1, $dstfile));
 				//verify file
@@ -51,9 +52,8 @@ function file_mirror_upload_contents() {
 			}
 			$pos++;
 		}
-		ftp_close($connection['ftp_connection']);
-		unset($connection);
-		unset($GLOBALS['connection']);
+		ftp_close($con);
+		unset($con);
 		$timediff=time()-$start;
 		if ($timediff>0)
 			watchdog('filemirror', "Transfered ".round($bytes/(1024*1024),1)." MB at ".round($bytes/($timediff*1024),1)."KB/s");

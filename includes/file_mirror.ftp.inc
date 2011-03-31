@@ -2,47 +2,51 @@
 
 /*
  * connect to a remote ftp site
+ * @param $host host to connect to
+ * @param $port
+ * @param $username
+ * @param $password
+ * @param $passive
+ * @param $dir root directory to chdir to
+ * @return connection handle, false on error
  */
 
-function file_mirror_ftp_connect($file_mirror, $display = false, $timeout = 15) {
-  global $connection;
-  // build the ftp connection
-  $connection['ftp_connection'] = ftp_connect($file_mirror->ftp_url, $file_mirror->ftp_port, $timeout);
-  $connection['ftp_login'] = ftp_login($connection['ftp_connection'], $file_mirror->ftp_user, $file_mirror->ftp_pass);
-  $connection['ftp_files'] = file_mirror_ftp_get_files($connection['ftp_connection'], $file_mirror, $file_mirror->ftp_dir);
-  $connection['ftp_passive'] = true;
-  if ($file_mirror->ftp_passive == 1) {
-    $connection['ftp_passive'] = ftp_pasv($connection['ftp_connection'],true);
-  }
+function file_mirror_ftp_connect($host,$port, $username, $password, $passive, $dir){
+	if($port==0)
+		$port=21;
+	if($passive==0)
+		$passive=false;
+	if(strlen(username)<=0)
+		$username="anonymous";
+	$timeout=15;
+	// build the ftp connection
+	$con = ftp_connect($host, $port, $timeout);
+	if ($con===false){
+		watchdog("filemirror", "Error connecting to $host");
+		return false;
+	}
+	$res = ftp_login($con, $username, $password);
+	if ($res===false){
+		watchdog("filemirror", "Error login on $host, password/username wrong?");
+		return false;
+	}
+	if ($passive) {
+		$res=ftp_pasv($con, true);
+		if ($res===false){
+			watchdog("filemirror", "Error setting passive mode on $host");
+			return false;
+		}
 
-  // check the connection to the server
-  if (! $connection['ftp_connection']) {
-    $message = 'Unable to connect to server %server';
-    $params = array('%server' => $file_mirror->title);
-  }
-  // can we login?
-  elseif (! $connection['ftp_login']) {
-    $message = 'Unable to login to server %server with username %user';
-    $params =  array('%server' => $file_mirror->ftp_url, '%user' => $file_mirror->ftp_user);
-  }
-  elseif (! $connection['ftp_passive']) {
-    $message = 'Unable to setup a passive connection to %server with username %user';
-    $params =  array('%server' => $file_mirror->ftp_url, '%user' => $file_mirror->ftp_user);
-  }
-  // can we get a list of files?
-  elseif (! $connection['ftp_files']) {
-    $message = 'Unable to get file list from server %server with username %user';
-    $params = array('%server' => $file_mirror->ftp_url, '%user' => $file_mirror->ftp_user);
-  }
+	}
+	if(strlen($dir)>0){
+		$res=ftp_chdir($con, $dir);
+		if ($res===false){
+			watchdog("filemirror", "Error chdir() to $dir");
+			return false;
+		}
 
-  // did we have an error condition?
-  if ($message) {
-    if ($display) { drupal_set_message(t($message, $params), 'error'); }
-    else { watchdog(MM_FTP_WATCHDOG_TYPE, $message, $params, WATCHDOG_ERROR); }
-    return;
-  }
-  // no error, return the connection
-  return $connection;
+	}
+	return $con;
 }
 
 /**
@@ -123,45 +127,14 @@ function file_mirror_ftp_completed_file_list(&$connection, $directory) {
   return $results;
 }
 
-/**
- * deletes file on remote server
- * @param file_name full filename to delete on remote server
- * @param display show message in drupal if true
- */
-function file_mirror_ftp_delete_file($file_name, &$connection, $display = false) {
-  // Remove the specified file from the FTP server
-  if (!@connection) {
-    return FALSE;
-  }
-
-  $delete_result = @ftp_delete($connection, $file_name);
-
-  if ($delete_result == TRUE) {
-    // The file/folder was deleted successfully
-    return TRUE;
-  }
-  else {
-    $message = "Couldn't delete the selected file";
-   // did we have an error condition?
-    if ($message) {
-      if ($display) { drupal_set_message(t($message, $params), 'error'); }
-      else { watchdog(MM_FTP_WATCHDOG_TYPE, $message, $params, WATCHDOG_ERROR); }
-      return;
-    }
-    
-  }
-}
-
-//upload a file to mirror
-
 /*
-* Create a directory + upload file on remote server
-* @param conn_id handle to ftp connection
+* Create directory + upload file on remote server
+* @param conn handle to ftp connection
 * @param src_file local relative path to file to upload
 * @param dst_dir directory on remote ftp server
 * @param filename file to upload
 */
-function file_mirror_ftp_putAll(&$conn_id, $src_file, $dst_file) {
+function file_mirror_ftp_put($con, $src_file, $dst_file) {
 	$localfile=$_SERVER['DOCUMENT_ROOT'].'/'.$src_file;
 	if (!is_readable($localfile)){
 		$localfile='/home/jj/web/www'.$_SERVER['DOCUMENT_ROOT'].'/'.$src_file;
@@ -170,37 +143,12 @@ function file_mirror_ftp_putAll(&$conn_id, $src_file, $dst_file) {
 		watchdog('filemirror', "couldn't read file for upload: ".$localfile);
 		return false;
 	}
-	@ftp_delete($conn_id, $dst_file); //delete possible existing file / directory
-	@ftp_rmdir($conn_id, $dst_file);
-	@ftp_mkdir($conn_id, dirname($dst_file));
-	if (ftp_put($conn_id, $dst_file, $localfile, FTP_BINARY)){
-	}else{
+	@ftp_delete($con, $dst_file); //delete possible existing file / directory
+	@ftp_rmdir($con, $dst_file);
+	@ftp_mkdir($con, dirname($dst_file));
+	if (!ftp_put($con, $dst_file, $localfile, FTP_BINARY)){
 	    watchdog('filemirror', "upload ". $localfile." failed");
 	}
 	return true;
 }
 
-/*
- * recursively creates a directory on remote server
-*/
-function file_mirror_ftpMkDir($path, $conn_id)
-  {
-   
-   $dir=split("/", $path);
-   $path="";
-   $ret = true;
-  
-   for ($i=0;$i<count($dir);$i++)
-   {
-       $path.="/".$dir[$i];
-       //echo "$path\n";
-       if(!@ftp_chdir($conn_id,$path)){
-         @ftp_chdir($conn_id,"/");
-         if(!@ftp_mkdir($conn_id,$path)){
-          $ret=false;
-          break;
-         }
-       }
-   }
-   return $ret;
-  }
