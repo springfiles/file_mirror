@@ -8,8 +8,8 @@ require_once ( dirname(__FILE__) . '/includes/file_mirror.files.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
 
 //defaults
-define('UPLOADSPERCRON', 20); //number of uploads to a particular mirror at every cron run
-define('FILE_STATUS_REMOTE', 500); //Extra file status definition for files only existing on remote mirrors
+define('UPLOADSPERCRON', 10); //number of uploads to a particular mirror at every cron run
+define('FILE_STATUS_REMOTE', 100); //Extra file status definition for files only existing on remote mirrors
 define('MIRROR_PATH', 'sites/default/files/downloads/spring/'); //path with files that will be mirrored
 
 //declare ftp connection;

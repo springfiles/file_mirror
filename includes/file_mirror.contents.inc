@@ -49,15 +49,7 @@ function file_mirror_upload_contents() {
 			}
 			$pos++;
 		}
-		//reindex the mirror: FIXME: not needed
-		$connection = null;
-//		$match = file_mirror_check_filelist($file_mirror, 'intersect');
-//		file_mirror_index_files($file_mirror, $match);
-		//refresh the filelist
-		$remote = file_mirror_check_filelist($file_mirror);
-		//get the sum of the filesizes and save it to db
-		file_mirror_used_diskspace(file_mirror_flatten_remote_array($remote), $file_mirror);
-		break; //only upload to one mirror
+		ftp_close($connection);
 	}
 	$timediff=time()-$start;
 	if ($timediff>0)
@@ -67,6 +59,7 @@ function file_mirror_upload_contents() {
 /**
  * Searches the files, that are not on the given mirror
  * @param id of the mirror
+ * @param maxfiles maximum files to return
  * @returns the files that are not on a mirror, limit to maxfiles
  */
 
