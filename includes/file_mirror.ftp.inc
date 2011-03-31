@@ -132,10 +132,7 @@ function file_mirror_ftp_completed_file_list(&$connection, $directory) {
 * @param filename file to upload
 */
 function file_mirror_ftp_put($con, $src_file, $dst_file) {
-	$localfile=$_SERVER['DOCUMENT_ROOT'].'/'.$src_file;
-	if (!is_readable($localfile)){
-		$localfile='/home/jj/web/www'.$_SERVER['DOCUMENT_ROOT'].'/'.$src_file;
-	}
+	$localfile=file_directory_path().$src_file;
 	if (!is_readable($localfile)){
 		watchdog('filemirror', "couldn't read file for upload: ".$localfile);
 		return false;

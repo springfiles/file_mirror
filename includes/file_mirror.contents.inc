@@ -49,6 +49,9 @@ function file_mirror_upload_contents() {
 				db_query("INSERT INTO {file_mirror_files} (fmid, fid, active, path, changed ) VALUES(%d, %d, %d, '%s', 0 )", array($file_mirror->fmid, $missing['fid'], 1, $dstfile));
 				//verify file
 				file_mirror_check_md5(10);
+			}else{
+				//upload failed, next mirror
+				continue;
 			}
 			$pos++;
 		}
