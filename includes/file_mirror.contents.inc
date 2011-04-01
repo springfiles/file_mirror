@@ -91,7 +91,7 @@ function get_files_to_upload($mirrorid,$maxfiles){
 	}
 	$res=array();
 	foreach($paths as $path){
-		watchdog("filemirror", "$path");
+//		watchdog("filemirror", "$path");
 		$q=db_query("SELECT fid, filename, filepath FROM files AS f
 			WHERE f.fid not in ( SELECT fid FROM
 			file_mirror_files WHERE fmid=%d)
