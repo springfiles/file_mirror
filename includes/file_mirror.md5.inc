@@ -31,10 +31,13 @@ function file_mirror_check_md5($amount=10){
 					WHERE fmfid = %d", 
 					array($query->md5,$query->fmfid));
 			$valid++;
-		}else {
+		}else if (strlen($md5)==32) {
 			watchdog('filemirror', "Invalid file ".$query->path." md5:  ".$md5.", deleted from db on site: ".$query->url_prefix);
 			db_query("DELETE FROM {file_mirror_files} WHERE fmfid = %d", array($query->fmfid));
 			$deleted++;
+		}else{
+			watchdog('filemirror', "Invalid result: ".$md5."on site: ".$query->url_prefix);
+                        db_query("UPDATE {file_mirror_files} SET changed = NOW() WHERE fmid = %d AND md5check IS NULL ", array($query->fmid));
 		}
 		$count++;
 	}
