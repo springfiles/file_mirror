@@ -13,10 +13,10 @@ define('MAX_LOCK_FILE_AGE_S', 10*60); //10 minutes
 if (file_exists('config.php'))
 	include ('config.php');
 
-if (defined('ALLOWED_IP') && ($_SERVER['REMOTE_IP'] != constant('ALLOWED_IP')))
-	exit("disallowed ip!");
+if (defined('ALLOWED_IP') && array_key_exists('REMOTE_ADDR',$_SERVER) && ($_SERVER['REMOTE_ADDR'] != constant('ALLOWED_IP')))
+	exit("disallowed ip: ".$_SERVER['REMOTE_ADDR']);
 
-if (defined ('PASSWORD') && ($_GET['pw'] != constant('PASSWORD')))
+if (defined ('PASSWORD') && array_key_exists('pw',$_GET) && ($_GET['pw'] != constant('PASSWORD')))
 	exit("disallowed password!");
 
 $path = @$_SERVER[DOCUMENT_ROOT] . '/' . @$_GET['p'];
