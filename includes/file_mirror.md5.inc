@@ -9,6 +9,7 @@ function file_mirror_check_md5($amount=10){
 		WHERE (f.md5check IS NULL OR (f.md5check < NOW() - INTERVAL 1 YEAR))
 		AND m.url_deamon IS NOT NULL 
 		AND h.md5 IS NOT NULL
+		AND m.active=1
 		ORDER BY f.changed ASC
 		limit 0, %d", array($amount));
 	$valid=0;
@@ -31,13 +32,13 @@ function file_mirror_check_md5($amount=10){
 					WHERE fmfid = %d", 
 					array($query->md5,$query->fmfid));
 			$valid++;
-		}else if (strlen($md5)==32) {
+		}else if (strlen($md5)==32) { //md5 invalid
 			watchdog('filemirror', "Invalid file ".$query->path." md5:  ".$md5.", deleted from db on site: ".$query->url_prefix);
 			db_query("DELETE FROM {file_mirror_files} WHERE fmfid = %d", array($query->fmfid));
 			$deleted++;
-		}else{
+		}else{ //file doesn't exist, password/ip error, ...
 			watchdog('filemirror', "Invalid result: ".$md5."on site: ".$query->url_prefix);
-                        db_query("UPDATE {file_mirror_files} SET changed = NOW() WHERE fmid = %d AND md5check IS NULL ", array($query->fmid));
+                        db_query("DELETE FROM {file_mirror_files} WHERE fmfid = %d", array($query->fmfid));
 		}
 		$count++;
 	}
