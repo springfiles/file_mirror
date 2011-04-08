@@ -4,7 +4,6 @@
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.contents.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.ftp.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.files.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
 
 //defaults
@@ -30,11 +29,6 @@ function file_mirror_cron() {
 
 function file_mirror_menu() {
   $items = array();
-  $items['admin/settings/file-mirror/recheckdumb'] = array(
-    'title' => t('recheck dumb'),
-    'page callback' => 'file_mirror_recheck_dumb',
-    'access arguments' => array('administer file mirror'),
-  );
   $items['admin/settings/file-mirror'] = array(
     'title' => t('File Mirror'),
     'page callback' => 'file_mirror_page_list',
@@ -91,38 +85,6 @@ function file_mirror_menu() {
     'access callback' => 'file_mirror_access',
     'type' => MENU_LOCAL_TASK,
     'weight' => 100,
-  );
-  $items['admin/settings/file-mirror/%file_mirror/check-contents'] = array(
-    'title' => t('Check contents'),
-    'page callback' => 'file_mirror_check_contents',
-    'page arguments' => array(3),
-    'access arguments' => array('update', 3),
-    'access callback' => 'file_mirror_access',
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items['admin/settings/file-mirror/%file_mirror/clean'] = array(
-    'title' => t('Clean mirror'),
-    'page callback' => 'file_mirror_check_delete_unknown',
-    'page arguments' => array(3),
-    'access arguments' => array('update', 3),
-    'access callback' => 'file_mirror_access',
-    'type' => MENU_CALLBACK,
-  );
-  $items['admin/settings/file-mirror/%file_mirror/index'] = array(
-    'title' => t('Index mirror contents'),
-    'page callback' => 'file_mirror_index_files_page',
-    'page arguments' => array(3),
-    'access arguments' => array('update', 3),
-    'access callback' => 'file_mirror_access',
-    'type' => MENU_CALLBACK,
-  );
-  $items['admin/settings/file-mirror/%file_mirror/cleanindex'] = array(
-    'title' => t('Clean file index'),
-    'page callback' => 'file_mirror_clean_index_page',
-    'page arguments' => array(3),
-    'access arguments' => array('update', 3),
-    'access callback' => 'file_mirror_access',
-    'type' => MENU_CALLBACK,
   );
   return $items;
 }
@@ -315,6 +277,3 @@ function file_mirror_fix_cron() {
   $q = db_query("DELETE FROM `variable` WHERE name = 'cron_threshold_semaphore'");
   return "fixed";
 }
-
- 
-
