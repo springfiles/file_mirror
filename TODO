@@ -1,0 +1,10 @@
+
+#export script
+
+ * remove hardcoded paths in sf-exporter.py
+
+#searchapi
+
+ * add more xml-rpc functions to get more data (link to minimap for example)
+
+
