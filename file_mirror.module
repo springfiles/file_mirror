@@ -4,6 +4,7 @@
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.contents.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.springdata.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.searchapi.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.ftp.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
 
