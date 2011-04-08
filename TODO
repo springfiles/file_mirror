@@ -3,8 +3,22 @@
 
  * remove hardcoded paths in sf-exporter.py
 
-#searchapi
+#xml-rpc
 
  * add more xml-rpc functions to get more data (link to minimap for example)
+ * allow registering url by script
+( username=youruseraccount@springfiles
+password=password )
 
+publisher=some name
+category=spring/games
+url=http://zero-k.info/games/zk-0.9.sd7
+
+name=Zero-K
+version=0.9
+description="ChangeLog: blab bla
+
+bla bla
+
+"
 

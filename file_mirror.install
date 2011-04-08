@@ -101,6 +101,83 @@ function file_mirror_schema() {
                 ),
         ),
     );
+
+	//schema for springdata
+  $schema['springdata_archives'] = array(
+    'description' => t('TODO'),
+    'fields' => array(
+      'fid' => array(
+        'description' => 'Primary Key: File ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'springname' => array(
+        'description' => t('The nid of the node to which the downloaded file was attached when it was downloaded.'),
+        'type' => 'varchar',
+'length' => 256,
+        'not null' => TRUE,
+'default' => '',
+      ),
+    ),
+    'primary key' => array('fid'),
+    'unique keys' => array(
+'springname'=>array('springname'),
+),
+  );
+
+  $schema['springdata_depends'] = array(
+    'description' => t('TODO'),
+    'fields' => array(
+      'fid' => array(
+        'description' => 'Primary Key: File ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'depends' => array(
+        'description' => 'Depends',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('fid', 'depends'),
+  );
+
+  $schema['springdata_startpos'] = array(
+    'description' => t('TODO'),
+    'fields' => array(
+      'fid' => array(
+        'description' => 'Primary Key: File ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'id' => array(
+        'description' => '# of Startpos',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'x' => array(
+        'description' => 'x of Startpos',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'z' => array(
+        'description' => 'z of Startpos',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('fid', 'id'),
+  );
+
+
+
     return $schema;
 }
 
