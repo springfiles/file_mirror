@@ -21,12 +21,12 @@ function file_mirror_cron() {
   	if (!$argv[1]=='--mirror=1'){
 		watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
 	}else{
+	//import xml data (required for xmlrpc-search)
 	file_mirror_import_xml();
 	//check for remote md5 hash
 	file_mirror_check_md5(50);
 	//upload files to mirror and updates the mirror file index in db
 	file_mirror_upload_contents();
-	file_mirror_import_xml();
 	}
 }
 
@@ -178,7 +178,7 @@ function file_mirror_get_fid_mirrors($fid) {
   {
     $array[] = $records;
   }
-  $records = db_fetch_object(db_query("SELECT 'Main server' as title, 'Czech Republic' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
+  $records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'CZ' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
   $records->path = str_replace(file_directory_path(), '', $records->path);
   $records->path = 'downloadmain/'.$fid;
   $array[] = $records;
@@ -191,13 +191,11 @@ function file_mirror_get_fid_mirrors($fid) {
 //should change this later into the preferred mirror to the client
 function file_mirror_get_fid_defaultMirror($fid) {
   $q = db_query("SELECT * FROM {file_mirror_files} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.active = 1 AND fm.fid = %d ORDER BY RAND() LIMIT 0,1", array($fid));
-  while ($records = db_fetch_object($q))
-  {
+  while ($records = db_fetch_object($q)){
     $array[] = $records;
   }
   $q = db_query("SELECT * FROM {file_mirror_files2} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.fid = %d ORDER BY RAND() LIMIT 0,1", array($fid));
-  while ($records = db_fetch_object($q))
-  {
+  while ($records = db_fetch_object($q)){
     $array[] = $records;
   }
   $records = db_fetch_object(db_query("SELECT 'Main server' as title, 'Netherlands' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));

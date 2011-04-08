@@ -170,9 +170,7 @@ function file_mirror_folders_form_submit($form_id, $form_values) {
      $record->fmid = $form_values['values']['fmid'];
      drupal_write_record('file_mirror_paths', $record);
      }
-  }
-  
-  
+  }  
 }
 
 function file_mirror_edit_form($form_state = NULL, $file_mirror = NULL) {
