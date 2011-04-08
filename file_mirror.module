@@ -3,6 +3,7 @@
 // Load module libraries
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.contents.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.springdata.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.ftp.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
 
@@ -20,10 +21,12 @@ function file_mirror_cron() {
   	if (!$argv[1]=='--mirror=1'){
 		watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
 	}else{
+	file_mirror_import_xml();
 	//check for remote md5 hash
 	file_mirror_check_md5(50);
 	//upload files to mirror and updates the mirror file index in db
 	file_mirror_upload_contents();
+	file_mirror_import_xml();
 	}
 }
 
@@ -207,7 +210,18 @@ function file_mirror_get_fid_defaultMirror($fid) {
   return $array;
 }
 
-
+/**
+* Implementation of hook_xmlrpc
+*/
+function file_mirror_xmlrpc(){
+	$methods[] = array(
+			'springfiles.search', // xml-rpc method name
+			'file_mirror_search', //function in module
+			array("string","struct"), //function signature //FIXME remove "string" (drupal bug?)
+			t('Handling a search request'), //help string
+		);
+	return $methods;
+}
 
 /**
 * Menu callback; loads a file mirror object
