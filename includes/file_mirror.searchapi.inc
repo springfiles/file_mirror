@@ -14,6 +14,7 @@ function _file_mirror_createquery(&$query, &$vars, $logical,$condition, $data){
 	if($data=="")
 		return;
 	$query.=" ".$logical." ".$condition;
+	$data=str_replace("_","\_",$data);
 	array_push($vars, $data);
 }
 /**
@@ -36,7 +37,7 @@ if(isset($req['logical'])&&($req['logical']=="or")){
 
 _file_mirror_createquery($query,$vars, $logical,'node_type.title LIKE "%s"', $req['category']);
 _file_mirror_createquery($query,$vars, $logical,'files.filename LIKE "%s"', $req['filename']);
-_file_mirror_createquery($query,$vars, $logical,'archives.springname LIKE "%s"', $req['springname']);
+_file_mirror_createquery($query,$vars, $logical,'archives.springname LIKE BINARY "%s"', $req['springname']);
 
 if ($query!="")
 	$query=" AND (".$query.")";
