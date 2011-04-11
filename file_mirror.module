@@ -216,7 +216,7 @@ function file_mirror_get_fid_defaultMirror($fid) {
 function file_mirror_xmlrpc(){
 	$methods[] = array(
 			'springfiles.search', // xml-rpc method name
-			'file_mirror_search', //function in module
+			'file_mirror_xmlsearch', //function in module
 			array("string","struct"), //function signature //FIXME remove "string" (drupal bug?)
 			t('Handling a search request'), //help string
 		);

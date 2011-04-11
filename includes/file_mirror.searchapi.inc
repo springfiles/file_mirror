@@ -21,7 +21,7 @@ function _file_mirror_createquery(&$query, &$vars, $logical,$condition, $data){
 *	implementation of the xml-rpc call
 */
 
-function file_mirror_search($req){
+function file_mirror_xmlsearch($req){
 global $base_url;
 $res="";
 $category="%";
