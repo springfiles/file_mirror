@@ -108,7 +108,7 @@ ORDER BY files.md5check',array($res[$i]['fid']));
 }
 $count=count($res);
 if ($count<>1)
-	watchdog("searchapi", "results: ".$count." request: ".$req['category']." ".$req['filename']." ".$req['springname']." ".$req['logical']);
+	watchdog("searchapi", "results: ".$count." request: ".$req['category']." ".$req['filename']." ".$req['springname']." ".$req['logical'].file_mirror_backtrace());
 return $res;
 }
 

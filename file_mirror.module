@@ -1,6 +1,7 @@
 <?php
 // Download files from remote ftp and create nodes for every file.
 // Load module libraries
+require_once ( dirname(__FILE__) . '/includes/file_mirror.debug.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.contents.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.springdata.inc');
