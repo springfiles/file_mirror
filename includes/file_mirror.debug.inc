@@ -1,7 +1,8 @@
 <?php
 
 function file_mirror_backtrace()
-{
+{	
+    return "";
     $output = "<div style='text-align: left; font-family: monospace;'>\n";
     $output .= "<b>Backtrace:</b><br />\n";
     $backtrace = debug_backtrace();
