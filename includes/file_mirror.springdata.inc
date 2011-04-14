@@ -26,10 +26,10 @@ function file_mirror_import_xml(){
 	//path where files from spring persists
 	$springfiles="sites/default/files/downloads/spring/"; //FIXME: hardcoded filepath
 	//fetch categories into array
-	$result=db_query("SELECT cid, name FROM {springdata_archives}");
+	$result=db_query("SELECT cid, name FROM {springdata_categories}");
 	$cat=array();
-	while($row=db_fetch_array($catres)){
-		$cat[$row['name']]=$cat[$row['cid']];
+	while($row=db_fetch_array($result)){
+		$cat[$row['name']]=$row['cid'];
 	}
 	$result=db_query("SELECT files.fid as fid,filepath as filepath FROM {files}
 LEFT JOIN {springdata_archives} AS archives ON archives.fid=files.fid
@@ -52,8 +52,8 @@ AND LEFT(files.filepath,%d)='%s'",array(strlen($springfiles),$springfiles));
 		}else if ($xml->getName()=='Map'){
 			$catid=$cat['maps'];
 		}
-		if(intval($catid)<=0){
-			watchdog("springdata", "Invalid catid: $catid read from ".$xmlfile);
+		if($catid<=0){
+			watchdog("springdata", "Invalid catid: $catid read from $xmlfile cat :" . $xml->getName().$cat['games'].$cat['maps']);
 			continue;
 		}
 		_springdata_import_archive($row['fid'],$xml,$catid);
