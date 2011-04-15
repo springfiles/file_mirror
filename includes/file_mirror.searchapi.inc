@@ -87,9 +87,9 @@ WHERE depends.fid=%d",$res[$i]['fid']);
 	while($row = db_fetch_array($result)){
 		if(!is_array($res[$i]['depends']))
 			$res[$i]['depends']=array();
-		if(strlen($row['springname'])<=0)
+		if(strlen($row['springname'])<=0) // 0 means it wasn't resolveable, return the string
 			$res[$i]['depends'][]=$row['depends_string'];
-		else
+		else //is resolveable, return string from archive
 			$res[$i]['depends'][]=$row['springname'];
 	}
 	//search + add additional mirrors to file
