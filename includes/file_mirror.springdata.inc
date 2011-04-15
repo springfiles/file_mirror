@@ -19,9 +19,9 @@ function _springdata_import_archive($fid,$xml,$catid){
 	}
 	if (($fid>0) && ($catid>0)){ //don't insert invalid data
 		//now insert the archive as last, if this commit is missing, all steps will be repeated on next run for this fid
-		db_query("INSERT INTO {springdata_archives} (fid,springname, cid) VALUES (%d,'%s', %d)",array($row['fid'],$xml->Name[0], $catid));
+		db_query("INSERT INTO {springdata_archives} (fid,springname, cid) VALUES (%d,'%s', %d)",array($fid,$xml->Name[0], $catid));
 	}else{
-		watchdog("filemirror", "invalid data to insert:". $row['fid'],$xml->Name[0], $catid);
+		watchdog("filemirror", "invalid data to insert:". $fid,$xml->Name[0], $catid);
 	}
 	return true;
 }
