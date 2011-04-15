@@ -80,14 +80,17 @@ while($row = db_fetch_array($result)){
 }
 for($i=0;$i<count($res);$i++){
 	//search + add depends to file
-	$result=db_query("SELECT archives.springname as springname
+	$result=db_query("SELECT archives.springname as springname, depends_string
 FROM {springdata_depends} AS depends
 LEFT JOIN {springdata_archives} AS archives ON depends.depends=archives.fid
 WHERE depends.fid=%d",$res[$i]['fid']);
 	while($row = db_fetch_array($result)){
 		if(!is_array($res[$i]['depends']))
 			$res[$i]['depends']=array();
-		$res[$i]['depends'][]=$row['springname'];
+		if(strlen($row['springname'])<=0)
+			$res[$i]['depends'][]=$row['depends_string'];
+		else
+			$res[$i]['depends'][]=$row['springname'];
 	}
 	//search + add additional mirrors to file
 	$result=db_query('SELECT CONCAT(mirror.url_prefix,"/",files.path) as url
