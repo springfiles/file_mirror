@@ -133,12 +133,11 @@ def getGameDepends(usync, idx, gamearchivecount, doc, game):
 		deps=os.path.basename(usync.GetPrimaryModArchiveList(i))
 		print deps
 		if not deps in springcontent and not deps.endswith(".sdp"): #FIXME: .sdp is returned wrong by unitsync
-			gameidx=usync.GetPrimaryModIndex(deps)
-			if (gameidx>=0):
-				deps=usync.GetPrimaryModName(gameidx)
+			if deps in springnames:
+				depend=springnames[deps]
 			else:
-				deps=rstrip(deps)
-			getXmlData(doc, depends, "Depend", deps)
+				depend=deps
+			getXmlData(doc, depends, "Depend", depend)
 
 def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount):
 	if os.path.isfile(filename):
@@ -164,10 +163,23 @@ def usage():
 --unitsync <libunitsync.so>\n\
 --datadir <maps/gamesdir>\n\
 "
+springnames={}
+def createdict(usync,gamescount, mapcount):
+	#create dict with springnames[filename]=springname
+	for i in range(0, gamescount):
+		springname=usync.GetPrimaryModName(i)
+		filename=usync.GetPrimaryModArchive(i)
+		springnames[filename]=springname
+	for i in range(0, mapcount): 
+		maparchivecount = usync.GetMapArchiveCount(usync.GetMapName(i)) # initialization for GetMapArchiveName()
+		filename = os.path.basename(usync.GetMapArchiveName(0))
+		print "["+str(i) +"/"+ str(mapcount)+ "] extracting data from "+filename
+		springname = usync.GetMapName(i)
+		springnames[filename]=springname
 
 def main():
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "ho:u:d:", ["help", "output=", "unitsync=", "datadir="])
+		opts, args = getopt.getopt(sys.argv[1:], "ho:u:d:t", ["help", "output=", "unitsync=", "datadir="])
 	except getopt.GetoptError, err:
 		print str(err)
 		sys.exit(2)
@@ -181,6 +193,8 @@ def main():
 			outputpath=a
 		elif o in ("-d", "--datadir"):
 			datadir=a
+		elif o in ("-t", "--test"):
+			test(unitsync)
 		elif o in ("-h","-?","--help"):
 			usage()
 			sys.exit()
@@ -191,6 +205,8 @@ def main():
 
 	usync.Init(True,1)
 	mapcount = usync.GetMapCount()
+	gamescount = usync.GetPrimaryModCount()
+	createdict(usync,gamescount, mapcount)
 	for i in range(0, mapcount): 
 		maparchivecount = usync.GetMapArchiveCount(usync.GetMapName(i)) # initialization for GetMapArchiveName()
 		filename = os.path.basename(usync.GetMapArchiveName(0))
@@ -198,8 +214,6 @@ def main():
 		springname = usync.GetMapName(i)
 		dumpmap(usync, springname, outputpath, filename,i)
 		writeMapXmlData(usync, springname, i, outputpath +"/" +filename+".metadata.xml",maparchivecount)
-
-	gamescount = usync.GetPrimaryModCount()
 	for i in range (0, gamescount):
 		springname=usync.GetPrimaryModName(i)
 		filename=usync.GetPrimaryModArchive(i)
@@ -207,7 +221,6 @@ def main():
 		gamearchivecount=usync.GetPrimaryModArchiveCount(i) # initialization for GetPrimaryModArchiveList()
 		writeGameXmlData(usync, springname, i, outputpath + "/" + filename + ".metadata.xml", gamearchivecount)
 	print "Parsed "+ str(gamescount) + " games, " + str(mapcount) + " maps"
-
 
 if __name__ == "__main__":
     main()
