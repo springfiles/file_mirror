@@ -45,7 +45,7 @@ def getMapDepends(usync,doc,idx,Map,maparchivecount):
 
 def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
         if os.path.isfile(filename):
-		print filename + " already exists, skipping..."
+		print "[skip] " +filename + " already exists, skipping..."
 	else:
 		doc = minidom.Document()
 		smap = doc.createElement("Map")
@@ -71,11 +71,12 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		metadata.write(doc.toxml("utf-8"))
 		metadata.close()
 		shutil.move(tmp,filename)
+		print "[created] " +filename +" ok"
 
 # extracts minimap from given file
 def createMapImage(usync, mapname, outfile, size):
 	if os.path.isfile(outfile):
-		print outfile + " already exists, skipping..."
+		print "[skip] " +outfile + " already exists, skipping..."
 		return
 	data=ctypes.string_at(usync.GetMinimap(mapname, 0), 1024*1024*2)
 	im = Image.frombuffer("RGB", (1024, 1024), data, "raw", "BGR;16")
@@ -83,11 +84,11 @@ def createMapImage(usync, mapname, outfile, size):
 	tmp=".tmp.jpg" # first create tmp file
 	im.save(tmp)
 	shutil.move(tmp,outfile) # rename to dest
-	print "wrote "+outfile
+	print "[created] " +outfile +" ok"
 
 def createMapInfoImage(usync, mapname, maptype, byteperpx, decoder,decoderparm, outfile, size):
 	if os.path.isfile(outfile):
-		print outfile + " already exists, skipping..."
+		print "[skip] " +outfile + " already exists, skipping..."
 		return
 	width = ctypes.pointer(ctypes.c_int())
 	height = ctypes.pointer(ctypes.c_int())
@@ -104,7 +105,7 @@ def createMapInfoImage(usync, mapname, maptype, byteperpx, decoder,decoderparm, 
 		tmp=".tmp.jpg"
 		im.save(tmp)
 		shutil.move(tmp,outfile)
-		print "wrote "+outfile
+		print "[created] " +outfile +" ok"
 
 
 def dumpmap(usync, springname, outpath, filename, idx):
@@ -112,7 +113,9 @@ def dumpmap(usync, springname, outpath, filename, idx):
 	heightmap = outpath + '/' + filename + ".heightmap" + ".jpg"
 	mapimage = outpath + '/' + filename + ".jpg"
 	if os.path.isfile(metalmap) and os.path.isfile(heightmap) and os.path.isfile(mapimage):
-		print "Already exported " + mapimage
+		print "[skip] " +metalmap + " already exists, skipping..."
+		print "[skip] " +heightmap + " already exists, skipping..."
+		print "[skip] " +mapimage + " already exists, skipping..."
 	else:
 		mapwidth=float(usync.GetMapWidth(idx))
 		mapheight=float(usync.GetMapHeight(idx))
@@ -139,7 +142,7 @@ def getGameDepends(usync, idx, gamearchivecount, doc, game):
 
 def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount, archivename):
 	if os.path.isfile(filename):
-		print filename + " already exists, skipping..."
+		print "[skip] " +filename + " already exists, skipping..."
 		return
 	doc = minidom.Document()
 	game = doc.createElement("Game")
@@ -153,6 +156,7 @@ def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount, archive
 	f.write(doc.toxml("utf-8"))
 	f.close()
 	shutil.move(tmp,filename)
+	print "[created] " +filename +" ok"
 
 
 def usage():
@@ -177,9 +181,10 @@ def createdict(usync,gamescount, mapcount):
 
 def create_torrent(filename, output):
 	if os.path.isdir(filename):
-		return ""
+		print "[skip] " +filename + "is a directory, can't create torrent"
+		return
 	if os.path.isfile(output):
-		print output + " already exists, skipping..."
+		print "[skip] " +output + " already exists, skipping..."
 		return
 	metalink._opts = { 'overwrite': False }
 	filesize=os.path.getsize(filename)
@@ -199,6 +204,7 @@ def create_torrent(filename, output):
 	f.write(data)
 	f.close()
 	shutil.move(tmp,output)
+	print "[created] " +output +" ok"
 
 def main():
 	try:
