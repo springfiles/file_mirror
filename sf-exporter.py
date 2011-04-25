@@ -58,7 +58,6 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		#MaxMetal
 		getXmlData(doc, smap, "MaxWind", str(usync.GetMapWindMax(idx)))
 		getXmlData(doc, smap, "MinWind", str(usync.GetMapWindMin(idx)))
-		getXmlData(doc, smap, "Torrent", get_torrent(archivename))
 		#Options
 		getMapPositions(usync,doc,idx,smap)
 		#TidalStrength
@@ -84,35 +83,35 @@ def rstrip(s):
 def createMapImage(usync, mapname, outfile, size):
 	if os.path.isfile(outfile):
 		print outfile + " already exists, skipping..."
-	else:
-		data=ctypes.string_at(usync.GetMinimap(mapname, 0), 1024*1024*2)
-		im = Image.frombuffer("RGB", (1024, 1024), data, "raw", "BGR;16")
-		im=im.resize(size)
-		tmp=".tmp.jpg" # first create tmp file
-		im.save(tmp)
-		shutil.move(tmp,outfile) # rename to dest
-		print "wrote "+outfile
+		return
+	data=ctypes.string_at(usync.GetMinimap(mapname, 0), 1024*1024*2)
+	im = Image.frombuffer("RGB", (1024, 1024), data, "raw", "BGR;16")
+	im=im.resize(size)
+	tmp=".tmp.jpg" # first create tmp file
+	im.save(tmp)
+	shutil.move(tmp,outfile) # rename to dest
+	print "wrote "+outfile
 
 def createMapInfoImage(usync, mapname, maptype, byteperpx, decoder,decoderparm, outfile, size):
 	if os.path.isfile(outfile):
 		print outfile + " already exists, skipping..."
-	else:
-		width = ctypes.pointer(ctypes.c_int())
-		height = ctypes.pointer(ctypes.c_int())
-		usync.GetInfoMapSize(mapname, maptype, width, height)
-		width = width.contents.value
-		height = height.contents.value
-		data = ctypes.create_string_buffer(int(width*height*byteperpx*2))
-		data.restype = ctypes.c_void_p
-		ret=usync.GetInfoMap(mapname, maptype, data, byteperpx)
-		if (ret<>0):
-			im = Image.frombuffer(decoder, (width, height), data, "raw", decoderparm)
-			im=im.convert("L")
-			im=im.resize(size)
-			tmp=".tmp.jpg"
-			im.save(tmp)
-			shutil.move(tmp,outfile)
-			print "wrote "+outfile
+		return
+	width = ctypes.pointer(ctypes.c_int())
+	height = ctypes.pointer(ctypes.c_int())
+	usync.GetInfoMapSize(mapname, maptype, width, height)
+	width = width.contents.value
+	height = height.contents.value
+	data = ctypes.create_string_buffer(int(width*height*byteperpx*2))
+	data.restype = ctypes.c_void_p
+	ret=usync.GetInfoMap(mapname, maptype, data, byteperpx)
+	if (ret<>0):
+		im = Image.frombuffer(decoder, (width, height), data, "raw", decoderparm)
+		im=im.convert("L")
+		im=im.resize(size)
+		tmp=".tmp.jpg"
+		im.save(tmp)
+		shutil.move(tmp,outfile)
+		print "wrote "+outfile
 
 
 def dumpmap(usync, springname, outpath, filename, idx):
@@ -148,20 +147,19 @@ def getGameDepends(usync, idx, gamearchivecount, doc, game):
 def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount, archivename):
 	if os.path.isfile(filename):
 		print filename + " already exists, skipping..."
-	else:
-		doc = minidom.Document()
-		game = doc.createElement("Game")
-		doc.appendChild(game)
-		getXmlData(doc, game, "Name", springname)
-		getXmlData(doc, game, "Description", usync.GetPrimaryModDescription(idx))
-		getXmlData(doc, game, "Version", usync.GetPrimaryModVersion(idx))
-		getXmlData(doc, game, "Torrent", get_torrent(archivename))
-		getGameDepends(usync, idx, gamesarchivecount, doc, game)
-		tmp=".tmp.xml"
-		f=open(tmp, 'w')
-		f.write(doc.toxml("utf-8"))
-		f.close()
-		shutil.move(tmp,filename)
+		return
+	doc = minidom.Document()
+	game = doc.createElement("Game")
+	doc.appendChild(game)
+	getXmlData(doc, game, "Name", springname)
+	getXmlData(doc, game, "Description", usync.GetPrimaryModDescription(idx))
+	getXmlData(doc, game, "Version", usync.GetPrimaryModVersion(idx))
+	getGameDepends(usync, idx, gamesarchivecount, doc, game)
+	tmp=".tmp.xml"
+	f=open(tmp, 'w')
+	f.write(doc.toxml("utf-8"))
+	f.close()
+	shutil.move(tmp,filename)
 
 
 def usage():
@@ -184,9 +182,12 @@ def createdict(usync,gamescount, mapcount):
 		springname = usync.GetMapName(i)
 		springnames[filename]=springname
 
-def get_torrent(filename):
+def create_torrent(filename, output):
 	if os.path.isdir(filename):
 		return ""
+	if os.path.isfile(output):
+		print output + " already exists, skipping..."
+		return
 	metalink._opts = { 'overwrite': False }
 	filesize=os.path.getsize(filename)
 	torrent = metalink.Torrent(filename)
@@ -194,12 +195,17 @@ def get_torrent(filename):
 	m.hashes.filename=filename
 	m.scan_file(filename, True, 255, 1)
 	m.hashes.get_multiple('ed2k')
-	data = {'files':[[metalink.encode_text(filename), int(filesize)]],
+	torrent_options = {'files':[[metalink.encode_text(filename), int(filesize)]],
 		'piece length':int(m.hashes.piecelength),
 		'pieces':m.hashes.pieces,
 		'encoding':'UTF-8',
 		}
-	return base64.b64encode(torrent.create(data))
+	data=torrent.create(torrent_options)
+	tmp=".tmp.torrent"
+	f=open(tmp,"wb")
+	f.write(data)
+	f.close()
+	shutil.move(tmp,output)
 
 def main():
 	try:
@@ -234,16 +240,20 @@ def main():
 	for i in range(0, mapcount):
 		maparchivecount = usync.GetMapArchiveCount(usync.GetMapName(i)) # initialization for GetMapArchiveName()
 		filename = os.path.basename(usync.GetMapArchiveName(0))
+		archivepath=usync.GetArchivePath(filename)+filename
 		print "["+str(i) +"/"+ str(mapcount)+ "] extracting data from "+filename
 		springname = usync.GetMapName(i)
 		dumpmap(usync, springname, outputpath, filename,i)
-		writeMapXmlData(usync, springname, i, outputpath +"/" +filename+".metadata.xml",maparchivecount, usync.GetArchivePath(filename)+filename)
+		writeMapXmlData(usync, springname, i, outputpath +"/" +filename+".metadata.xml",maparchivecount, archivepath)
+		create_torrent(archivepath, outputpath +"/" +filename+".torrent")
 	for i in range (0, gamescount):
 		springname=usync.GetPrimaryModName(i)
 		filename=usync.GetPrimaryModArchive(i)
+		archivepath=usync.GetArchivePath(filename)+filename
 		print "["+str(i) +"/"+ str(gamescount)+ "] extracting data from "+filename
 		gamearchivecount=usync.GetPrimaryModArchiveCount(i) # initialization for GetPrimaryModArchiveList()
-		writeGameXmlData(usync, springname, i, outputpath + "/" + filename + ".metadata.xml", gamearchivecount, usync.GetArchivePath(filename)+filename)
+		writeGameXmlData(usync, springname, i, outputpath + "/" + filename + ".metadata.xml", gamearchivecount, archivepath)
+		create_torrent(archivepath, outputpath +"/" +filename+".torrent")
 	print "Parsed "+ str(gamescount) + " games, " + str(mapcount) + " maps"
 
 if __name__ == "__main__":
