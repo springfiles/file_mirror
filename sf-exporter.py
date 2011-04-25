@@ -185,6 +185,8 @@ def createdict(usync,gamescount, mapcount):
 		springnames[filename]=springname
 
 def get_torrent(filename):
+	if os.path.isdir(filename):
+		return ""
 	metalink._opts = { 'overwrite': False }
 	filesize=os.path.getsize(filename)
 	torrent = metalink.Torrent(filename)
