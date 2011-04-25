@@ -6,6 +6,11 @@ import ctypes
 import Image
 import shutil
 import getopt
+import base64
+
+import sys
+sys.path.append('metalink')
+import metalink
 
 from xml.dom import minidom
 
@@ -38,7 +43,7 @@ def getMapDepends(usync,doc,idx,Map,maparchivecount):
 			getXmlData(doc, node, "Depend", str(deps))
 	Map.appendChild(node)
 
-def writeMapXmlData(usync, smap, idx, filename,maparchivecount):
+def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
         if os.path.isfile(filename):
 		print filename + " already exists, skipping..."
 	else:
@@ -53,6 +58,7 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount):
 		#MaxMetal
 		getXmlData(doc, smap, "MaxWind", str(usync.GetMapWindMax(idx)))
 		getXmlData(doc, smap, "MinWind", str(usync.GetMapWindMin(idx)))
+		getXmlData(doc, smap, "Torrent", get_torrent(archivename))
 		#Options
 		getMapPositions(usync,doc,idx,smap)
 		#TidalStrength
@@ -139,7 +145,7 @@ def getGameDepends(usync, idx, gamearchivecount, doc, game):
 				depend=deps
 			getXmlData(doc, depends, "Depend", depend)
 
-def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount):
+def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount, archivename):
 	if os.path.isfile(filename):
 		print filename + " already exists, skipping..."
 	else:
@@ -149,6 +155,7 @@ def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount):
 		getXmlData(doc, game, "Name", springname)
 		getXmlData(doc, game, "Description", usync.GetPrimaryModDescription(idx))
 		getXmlData(doc, game, "Version", usync.GetPrimaryModVersion(idx))
+		getXmlData(doc, game, "Torrent", get_torrent(archivename))
 		getGameDepends(usync, idx, gamesarchivecount, doc, game)
 		tmp=".tmp.xml"
 		f=open(tmp, 'w')
@@ -177,13 +184,28 @@ def createdict(usync,gamescount, mapcount):
 		springname = usync.GetMapName(i)
 		springnames[filename]=springname
 
+def get_torrent(filename):
+	metalink._opts = { 'overwrite': False }
+	filesize=os.path.getsize(filename)
+	torrent = metalink.Torrent(filename)
+	m = metalink.Metafile()
+	m.hashes.filename=filename
+	m.scan_file(filename, True, 255, 1)
+	m.hashes.get_multiple('ed2k')
+	data = {'files':[[metalink.encode_text(filename), int(filesize)]],
+		'piece length':int(m.hashes.piecelength),
+		'pieces':m.hashes.pieces,
+		'encoding':'UTF-8',
+		}
+	return base64.b64encode(torrent.create(data))
+
 def main():
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "ho:u:d:t", ["help", "output=", "unitsync=", "datadir="])
 	except getopt.GetoptError, err:
 		print str(err)
 		sys.exit(2)
-	unitsync="/usr/lib/spring/unitsync.so"
+	unitsync="/usr/lib/spring/libunitsync.so"
 	outputpath="../../../default/files/springdata"
 	datadir=outputpath
 	for o, a in opts:
@@ -207,19 +229,19 @@ def main():
 	mapcount = usync.GetMapCount()
 	gamescount = usync.GetPrimaryModCount()
 	createdict(usync,gamescount, mapcount)
-	for i in range(0, mapcount): 
+	for i in range(0, mapcount):
 		maparchivecount = usync.GetMapArchiveCount(usync.GetMapName(i)) # initialization for GetMapArchiveName()
 		filename = os.path.basename(usync.GetMapArchiveName(0))
 		print "["+str(i) +"/"+ str(mapcount)+ "] extracting data from "+filename
 		springname = usync.GetMapName(i)
 		dumpmap(usync, springname, outputpath, filename,i)
-		writeMapXmlData(usync, springname, i, outputpath +"/" +filename+".metadata.xml",maparchivecount)
+		writeMapXmlData(usync, springname, i, outputpath +"/" +filename+".metadata.xml",maparchivecount, usync.GetArchivePath(filename)+filename)
 	for i in range (0, gamescount):
 		springname=usync.GetPrimaryModName(i)
 		filename=usync.GetPrimaryModArchive(i)
 		print "["+str(i) +"/"+ str(gamescount)+ "] extracting data from "+filename
 		gamearchivecount=usync.GetPrimaryModArchiveCount(i) # initialization for GetPrimaryModArchiveList()
-		writeGameXmlData(usync, springname, i, outputpath + "/" + filename + ".metadata.xml", gamearchivecount)
+		writeGameXmlData(usync, springname, i, outputpath + "/" + filename + ".metadata.xml", gamearchivecount, usync.GetArchivePath(filename)+filename)
 	print "Parsed "+ str(gamescount) + " games, " + str(mapcount) + " maps"
 
 if __name__ == "__main__":
