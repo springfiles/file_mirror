@@ -112,7 +112,8 @@ ORDER BY files.md5check',array($res[$i]['fid']));
 	while($row = db_fetch_array($result)){
 		$res[$i]['mirrors'][]=$row['url'];
 	}
-	$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
+	if(isset($req['torrent']))
+		$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
 	//randomize order of result
 	shuffle($res[$i]['mirrors']);
 	unset($res[$i]['fid']);
