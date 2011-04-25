@@ -17,6 +17,15 @@ function _file_mirror_createquery(&$query, &$vars, $logical,$condition, $data){
 	$data=str_replace("_","\_",$data);
 	array_push($vars, $data);
 }
+
+function _file_mirror_gettorrent($filename){
+	$file=file_directory_path()."/springdata/".$filename.".torrent";
+	if (is_readable($file)){
+		return base64_encode(file_get_contents($file));
+	}
+	return "no torrent info $file";
+}
+
 /**
 *	implementation of the xml-rpc call
 */
@@ -103,6 +112,7 @@ ORDER BY files.md5check',array($res[$i]['fid']));
 	while($row = db_fetch_array($result)){
 		$res[$i]['mirrors'][]=$row['url'];
 	}
+	$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
 	//randomize order of result
 	shuffle($res[$i]['mirrors']);
 	unset($res[$i]['fid']);
