@@ -206,12 +206,13 @@ def main():
 		opts, args = getopt.getopt(sys.argv[1:], "ho:u:d:t", ["help", "output=", "unitsync=", "datadir="])
 	except getopt.GetoptError, err:
 		print str(err)
+		usage()
 		sys.exit(2)
 	unitsync="/usr/lib/spring/libunitsync.so"
 	outputpath="../../../default/files/springdata"
 	datadir=outputpath
 	for o, a in opts:
-		if o == ("-u", "--unitsync"):
+		if o in("-u", "--unitsync"):
 			unitsync=a
 		elif o in ("-o", "--output"):
 			outputpath=a
@@ -222,7 +223,6 @@ def main():
 		elif o in ("-h","-?","--help"):
 			usage()
 			sys.exit()
-	
 	outputpath = os.path.abspath(outputpath)
 	os.environ["SPRING_DATADIR"]=outputpath
 	usync = unitsyncpkg.Unitsync(unitsync)
