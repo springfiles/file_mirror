@@ -17,6 +17,14 @@ from xml.dom import minidom
 
 springcontent = [ 'bitmaps.sdz', 'springcontent.sdz', 'maphelper.sdz', 'cursors.sdz' ]
 
+def getXmlData(doc, parent, element, value):
+	node = doc.createElement(element)
+	value = str(value)
+	value = value.decode('utf-8','replace')
+	subnode = doc.createTextNode(value)
+	node.appendChild(subnode)
+	parent.appendChild(node)
+
 def getMapPositions(usync,doc, idx, Map):
 	positions = doc.createElement("Positions")
 	startpositions = usync.GetMapPosCount(idx)
@@ -26,14 +34,6 @@ def getMapPositions(usync,doc, idx, Map):
 		getXmlData(doc, startpos, "Z", str(usync.GetMapPosZ(idx, i)))
 		positions.appendChild(startpos)
 	Map.appendChild(positions)
-
-def getXmlData(doc, parent, element, value):
-	node = doc.createElement(element)
-	value = str(value)
-	value = value.decode('utf-8','replace')
-	subnode = doc.createTextNode(value)
-	node.appendChild(subnode)
-	parent.appendChild(node)
 
 def getMapDepends(usync,doc,idx,Map,maparchivecount):
 	for j in range (1, maparchivecount): # get depends for file, idx=0 is filename itself
@@ -71,13 +71,6 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		metadata.write(doc.toxml("utf-8"))
 		metadata.close()
 		shutil.move(tmp,filename)
-
-# remove a file suffix
-def rstrip(s):
-	for suffix in ('.sd7', '.sdf', '.sdz'):
-		if suffix and s.endswith(suffix):
-			s = s[:-len(suffix)]
-	return s
 
 # extracts minimap from given file
 def createMapImage(usync, mapname, outfile, size):
