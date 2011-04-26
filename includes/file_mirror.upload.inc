@@ -66,9 +66,11 @@ function _remote_file_copy($url, $tmpfile, $localfile){
 		watchdog("file_mirror", "local file $localfile already exists!");
 		return false;
 	}
-	$file=fopen($tmpfile,"wb");
-	$rfile=fopen($res['url'],"rb");
+	$rfile=fopen($url,"rb");
 	if ($rfile===false)
+		return false;
+	$file=fopen($tmpfile,"wb");
+	if ($file===false)
 		return false;
 	while(!feof($rfile)){
 		$data=fread($rfile, 4096);
@@ -88,9 +90,9 @@ function _remote_file_copy($url, $tmpfile, $localfile){
 */
 function _get_file_path($category){
 	if ($category == "games")
-		return MIRROR_PATH."/games";
+		return MIRROR_PATH."games";
 	if ($category == "maps")
-		return MIRROR_PATH."/games";
+		return MIRROR_PATH."maps";
 	return false;
 }
 
@@ -98,20 +100,21 @@ function _get_file_path($category){
 * download all files that are known in the table file_mirror_upload + make them known to drupal
 */
 function file_mirror_cronupload(){
-	$res=db_query("SELECT * FROM {file_mirror_upload} up
+	$res=db_query("SELECT up.url, up.filename, up.uploadid, cat.name as category FROM {file_mirror_upload} up
 		LEFT JOIN {springdata_categories} as cat ON cat.cid=up.cid");
 	while($row=db_fetch_array($res)){
 		$path=_get_file_path($row['category']);
 		if ($path===false){
-			watchdog("file_mirror", "Unknown category, couldn't get path for upload");
+			watchdog("file_mirror", "Unknown category ".$row['category']." couldn't get path for upload");
 			continue;
 		}
 		$absname=$path.'/'.$row['filename'];
-		if (_remote_file_copy($row['url'], $absname)===false){
+		$tmpname=$path.'/.'.$row['filename'].".partial";
+		if (_remote_file_copy($row['url'],$tmpname, $absname)===false){
 			watchdog("file_mirror", "Couldn't download file ".$row['url']." to ".$absname);
 			continue;
 		}
-		if (!file_copy($absfile, $path.'/.'.$row['filename'].".partial" , $absfile, FILE_EXISTS_ERROR)) //make file known to drupal
+		if (!file_copy($absfile, $tmpname , $absfile, FILE_EXISTS_ERROR)) //make file known to drupal
 			continue;
 		db_query("DELETE FROM {file_mirror_upload} WHERE uploadid=%d", array($row['uploadid']));
 		_create_touch_file($absfile);
