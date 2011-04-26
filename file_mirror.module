@@ -8,6 +8,7 @@ require_once ( dirname(__FILE__) . '/includes/file_mirror.springdata.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.searchapi.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.ftp.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.upload.inc');
 
 //defaults
 define('UPLOADSPERCRON', 10); //number of uploads to a particular mirror at every cron run
@@ -23,12 +24,14 @@ function file_mirror_cron() {
   	if (!$argv[1]=='--mirror=1'){
 		watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
 	}else{
-	//import xml data (required for xmlrpc-search)
-	file_mirror_import_xml();
-	//check for remote md5 hash
-	file_mirror_check_md5(50);
-	//upload files to mirror and updates the mirror file index in db
-	file_mirror_upload_contents();
+		//import xml data (required for xmlrpc-search)
+		file_mirror_import_xml();
+		//download files that where added to queue via xml-rpc api
+		file_mirror_cronupload();
+		//check for remote md5 hash
+		file_mirror_check_md5(50);
+		//upload files to mirror and updates the mirror file index in db
+		file_mirror_upload_contents();
 	}
 }
 
@@ -116,8 +119,19 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
       return $blocks;
   }
 }
-//implementation of hook_nodeapi
-//adds filemirror data to $node with attachment files or filefields
+/**
+* notify cron job about changes
+*/
+function _create_touch_file($filename){
+	$touchfile=MIRROR_PATH."./.modified";
+	watchdog("filemirror", "file ".$filename." was uploaded, notifying system cron with ".$touchfile);
+	touch($touchfile);
+}
+
+/**
+*implementation of hook_nodeapi
+*adds filemirror data to $node with attachment files or filefields
+*/
 function file_mirror_nodeapi(&$node, $op, $teaser) {
   $result = array();
   switch ($op) {
@@ -156,9 +170,7 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
 				$pos=strpos($node->field_file[0][filepath], MIRROR_PATH);
 				if ($pos!==false){
 					if ($pos==0){
-						$touchfile=MIRROR_PATH."./.modified";
-						watchdog("filemirror", "file ".$node->field_file[0]['fid']." ".$node->field_file[0][filepath]." was uploaded, notifying system cron with ".$touchfile);
-						touch($touchfile);
+						_create_touch_file($node->field_file[0][filepath]);
 					}
 				}
 			break;
@@ -219,6 +231,12 @@ function file_mirror_xmlrpc(){
 			'file_mirror_xmlsearch', //function in module
 			array("string","struct"), //function signature //FIXME remove "string" (drupal bug?)
 			t('Handling a search request'), //help string
+		);
+	$methods[] = array(
+			'springfiles.upload',
+			'file_mirror_uploadfile',
+			array("string", "struct"), //function signature //FIXME remove "string" (drupal bug?)
+			t('Handling a upload request'),
 		);
 	return $methods;
 }
