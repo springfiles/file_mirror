@@ -176,6 +176,20 @@ function file_mirror_schema() {
     'primary key' => array('fid', 'id'),
   );
 
+  $schema['file_mirror_upload'] = array(
+	'fields' => array(
+		'uploadid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
+		'uid' => array('type' => 'int','size' => 'normal'),
+		'cid' => array('type' => 'int','size' => 'tiny'),
+		'filename' => array('type' => 'text','size' => 'small'),
+		'url' => array('type' => 'text','size' => 'small'),
+	),
+	'primary key' => array('uploadid'),
+	'unique keys' => array(
+			'filename' => array('fmid')
+			'url' => array('fmid')
+		),
+  );
 
 
     return $schema;
