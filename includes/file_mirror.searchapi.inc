@@ -48,7 +48,7 @@ function file_mirror_xmlsearch($req){
 	_file_mirror_createquery($query,$vars, $logical,'a.springname LIKE BINARY "%s"', $req['springname']);
 
 	if($query!="")
-		$query="WHERE ".$query;
+		$query=" AND (".$query.")";
 	$result=db_query("SELECT
 		f.fid as fid,
 		f.filename as filename,
@@ -62,6 +62,7 @@ function file_mirror_xmlsearch($req){
 		LEFT JOIN springdata_archives as a ON f.fid=a.fid
 		LEFT JOIN springdata_categories as c ON a.cid=c.cid
 		LEFT JOIN filehash as h ON f.fid=h.fid
+		WHERE c.cid>0
 		$query
 		ORDER BY f.fid DESC
 		LIMIT 0,10
