@@ -44,40 +44,33 @@ if(isset($req['logical'])&&($req['logical']=="or")){
 	$logical="AND";
 }
 
-_file_mirror_createquery($query,$vars, $logical,'node_type.title LIKE "%s"', $req['category']);
-_file_mirror_createquery($query,$vars, $logical,'files.filename LIKE "%s"', $req['filename']);
-_file_mirror_createquery($query,$vars, $logical,'archives.springname LIKE BINARY "%s"', $req['springname']);
+_file_mirror_createquery($query,$vars, $logical,'c.name LIKE "%s"', $req['category']);
+_file_mirror_createquery($query,$vars, $logical,'f.filename LIKE "%s"', $req['filename']);
+_file_mirror_createquery($query,$vars, $logical,'a.springname LIKE BINARY "%s"', $req['springname']);
 
-if ($query!="")
-	$query=" AND (".$query.")";
-$result=db_query("
+if($query!="")
+	$query="WHERE ".$query;
+	$result=db_query("
 SELECT
-files.fid as fid,
-files.filename as filename,
-files.filepath as filepath,
-files.origname as origname,
-node.title as title,
-hash.md5 as md5,
-archives.springname as springname,
-node_type.title as category,
-files.filesize as size,
-files.timestamp as timestamp,
-CONCAT('%s',CAST(node.nid AS CHAR)) as description
-FROM {files}
-LEFT JOIN {content_field_file} AS cont ON files.fid= cont.field_file_fid
-LEFT JOIN {node} AS node ON cont.nid = node.nid
-LEFT JOIN {filehash} AS hash ON files.fid = hash.fid
-LEFT JOIN {content_type_file} AS type ON cont.nid=type.nid
-LEFT JOIN {node} as node_type ON type.field_category_nid=node_type.nid
-LEFT JOIN {springdata_archives} as archives ON files.fid = archives.fid
-WHERE node.nid IS NOT NULL
+f.fid as fid,
+f.filename as filename,
+f.filepath as filepath,
+f.origname as origname,
+h.md5 as md5,
+a.springname as springname,
+c.name as category,
+f.filesize as size,
+f.timestamp as timestamp
+FROM files as f
+LEFT JOIN springdata_archives as a ON f.fid=a.fid
+LEFT JOIN springdata_categories as c ON a.cid=c.cid
+LEFT JOIN filehash as h ON f.fid=h.fid
 $query
-ORDER BY node.nid DESC
+ORDER BY f.fid DESC
 LIMIT 0,10
 ",
 $vars
 );
-
 $res=array();
 while($row = db_fetch_array($result)){
 	//add primary server
