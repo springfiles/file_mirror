@@ -6,7 +6,7 @@ function _array_tostr($arr){
 		if ($res=="")
 			$res=$key;
 		else
-			$res.=" ,".$key;
+			$res.=", ".$key;
 	return $res;
 }
 
@@ -49,8 +49,13 @@ function file_mirror_uploadfile($req){
 		return "ERROR: File $filename already exists";
 	$res=db_query("SELECT cid from {springdata_categories} WHERE name='%s'",array($req['category']));
 	$category=db_result($res);
-	if ($category===false)
-		return "ERROR: Invalid category ".$category;
+	if ($category===false){
+		$res=db_query("SELECT name from {springdata_categories}");
+		$categories=array();
+		while($row=db_fetch_array($res))
+			$categories[]=$row['name'];
+		return "ERROR: Invalid category '".$req['category']. "'. Available categories: "._array_tostr($categories);
+	}
 
 	//all input is valid, insert it into db
 	$res=db_query("INSERT INTO {file_mirror_upload} (uid, cid, filename, url) VALUES ( %d, %d, '%s', '%s')", array($userid, $category, $filename, $url));
@@ -61,29 +66,25 @@ function file_mirror_uploadfile($req){
 }
 /** copy a file (either local file or a remote file, for example http)
 */
-function _remote_file_copy($url, $tmpfile, $localfile){
-	if (file_exists($localfile)){
-		watchdog("file_mirror", "local file $localfile already exists!");
-		return false;
-	}
+function _remote_file_copy($url, $localfile){
 	$rfile=fopen($url,"rb");
 	if ($rfile===false)
 		return false;
-	$file=fopen($tmpfile,"wb");
+	$file=fopen($localfile,"wb");
 	if ($file===false)
 		return false;
 	while(!feof($rfile)){
 		$data=fread($rfile, 4096);
-		if (fwrite($tmp, $data)===false){
-			fclose($tmp);
+		if (fwrite($file, $data)===false){
+			fclose($file);
 			fclose($rfile);
-			unlink($tmpfile);
+			unlink($localfile);
 			return false;
 		}
 	}
 	fclose($file);
 	fclose($rfile);
-	return rename($tmpfile, $localfile);
+	return true;
 }
 /**
 * returns path for given category
@@ -100,7 +101,7 @@ function _get_file_path($category){
 * download all files that are known in the table file_mirror_upload + make them known to drupal
 */
 function file_mirror_cronupload(){
-	$res=db_query("SELECT up.url, up.filename, up.uploadid, cat.name as category FROM {file_mirror_upload} up
+	$res=db_query("SELECT up.url, up.filename, up.uploadid, cat.name as category, up.uid FROM {file_mirror_upload} up
 		LEFT JOIN {springdata_categories} as cat ON cat.cid=up.cid");
 	while($row=db_fetch_array($res)){
 		$path=_get_file_path($row['category']);
@@ -109,13 +110,23 @@ function file_mirror_cronupload(){
 			continue;
 		}
 		$absname=$path.'/'.$row['filename'];
+		if (file_exists($absname)){
+			watchdog("file_mirror", "local file $absname already exists!");
+			return false;
+		}
 		$tmpname=$path.'/.'.$row['filename'].".partial";
-		if (_remote_file_copy($row['url'],$tmpname, $absname)===false){
-			watchdog("file_mirror", "Couldn't download file ".$row['url']." to ".$absname);
+		if (_remote_file_copy($row['url'],$tmpname)===false){
+			watchdog("file_mirror", "Couldn't download file ".$row['url']." to ".$tmpname);
 			continue;
 		}
-		if (!file_copy($absfile, $tmpname , $absfile, FILE_EXISTS_ERROR)) //make file known to drupal
+		if (!rename($tmpname, $absname)){
+			watchdog("file_mirror", "Error adding to drupal ".$row['url']." to ".$absname.print_r(drupal_get_messages(),true));
 			continue;
+		}
+		db_query("INSERT INTO {files} (filename, filepath, filemime, filesize, status, timestamp, uid) VALUES ('%s', '%s', '%s', %d, %d, %d, %d)",
+				array($row['filename'],$absname,"application/octet-stream",filesize($absname),1,time(), $row['uid'])
+			);
+
 		db_query("DELETE FROM {file_mirror_upload} WHERE uploadid=%d", array($row['uploadid']));
 		_create_touch_file($absfile);
 	}
