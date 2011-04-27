@@ -186,8 +186,8 @@ function file_mirror_schema() {
 	),
 	'primary key' => array('uploadid'),
 	'unique keys' => array(
-			'filename' => array('fmid')
-			'url' => array('fmid')
+			'filename' => array('fmid'),
+			'url' => array('fmid'),
 		),
   );
 
