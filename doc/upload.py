@@ -14,7 +14,7 @@ category=sys.argv[3]
 filename=sys.argv[4]
 url=sys.argv[5]
 
-proxy = ServerProxy('http://springfiles.dev/xmlrpc.php')
+proxy = ServerProxy('http://springfiles.com/xmlrpc.php')
 data = {
 	"username" : user,
 	"password" : password,
