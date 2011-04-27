@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Adds an url for queueing of springfiles.com upload/mirroring service
+
 from xmlrpclib import ServerProxy 
 import pprint
 import sys
