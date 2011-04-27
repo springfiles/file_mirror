@@ -23,7 +23,8 @@ function _file_mirror_gettorrent($filename){
 	if (is_readable($file)){
 		return base64_encode(file_get_contents($file));
 	}
-	return "no torrent info $file";
+	watchdog("file_mirror", "no torrent info for $file");
+	return "";
 }
 
 /**
