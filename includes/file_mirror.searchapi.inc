@@ -44,8 +44,8 @@ if(isset($req['logical'])&&($req['logical']=="or")){
 	$logical="AND";
 }
 
-_file_mirror_createquery($query,$vars, $logical,'c.name LIKE "%s"', $req['category']);
 _file_mirror_createquery($query,$vars, $logical,'f.filename LIKE "%s"', $req['filename']);
+_file_mirror_createquery($query,$vars, $logical,'c.name LIKE "%s"', $req['category']);
 _file_mirror_createquery($query,$vars, $logical,'a.springname LIKE BINARY "%s"', $req['springname']);
 
 if($query!="")
@@ -55,7 +55,6 @@ SELECT
 f.fid as fid,
 f.filename as filename,
 f.filepath as filepath,
-f.origname as origname,
 h.md5 as md5,
 a.springname as springname,
 c.name as category,
@@ -76,8 +75,6 @@ while($row = db_fetch_array($result)){
 	//add primary server
 	$row['mirrors']=array($base_url.'/'.$row['filepath']);
 	unset($row['filepath']);
-	unset($row['origname']);
-	unset($row['title']);
 	$res[]=$row;
 }
 for($i=0;$i<count($res);$i++){
