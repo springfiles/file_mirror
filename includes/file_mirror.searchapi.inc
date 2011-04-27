@@ -31,88 +31,87 @@ function _file_mirror_gettorrent($filename){
 */
 
 function file_mirror_xmlsearch($req){
-global $base_url;
-$res="";
-$category="%";
-$query="";
-$vars=array($base_url."/node/");
+	global $base_url;
+	$res="";
+	$category="%";
+	$query="";
+	$vars=array();
 
-
-if(isset($req['logical'])&&($req['logical']=="or")){
-	$logical="OR";
-}else{
-	$logical="AND";
-}
-
-_file_mirror_createquery($query,$vars, $logical,'f.filename LIKE "%s"', $req['filename']);
-_file_mirror_createquery($query,$vars, $logical,'c.name LIKE "%s"', $req['category']);
-_file_mirror_createquery($query,$vars, $logical,'a.springname LIKE BINARY "%s"', $req['springname']);
-
-if($query!="")
-	$query="WHERE ".$query;
-	$result=db_query("
-SELECT
-f.fid as fid,
-f.filename as filename,
-f.filepath as filepath,
-h.md5 as md5,
-a.springname as springname,
-c.name as category,
-f.filesize as size,
-f.timestamp as timestamp
-FROM files as f
-LEFT JOIN springdata_archives as a ON f.fid=a.fid
-LEFT JOIN springdata_categories as c ON a.cid=c.cid
-LEFT JOIN filehash as h ON f.fid=h.fid
-$query
-ORDER BY f.fid DESC
-LIMIT 0,10
-",
-$vars
-);
-$res=array();
-while($row = db_fetch_array($result)){
-	//add primary server
-	$row['mirrors']=array($base_url.'/'.$row['filepath']);
-	unset($row['filepath']);
-	$res[]=$row;
-}
-for($i=0;$i<count($res);$i++){
-	//search + add depends to file
-	$result=db_query("SELECT archives.springname as springname, depends_string
-FROM {springdata_depends} AS depends
-LEFT JOIN {springdata_archives} AS archives ON depends.depends=archives.fid
-WHERE depends.fid=%d",$res[$i]['fid']);
-	while($row = db_fetch_array($result)){
-		if(!is_array($res[$i]['depends']))
-			$res[$i]['depends']=array();
-		if(strlen($row['springname'])<=0) // 0 means it wasn't resolveable, return the string
-			$res[$i]['depends'][]=$row['depends_string'];
-		else //is resolveable, return string from archive
-			$res[$i]['depends'][]=$row['springname'];
+	if(isset($req['logical'])&&($req['logical']=="or")){
+		$logical="OR";
+	}else{
+		$logical="AND";
 	}
-	//search + add additional mirrors to file
-	$result=db_query('SELECT CONCAT(mirror.url_prefix,"/",files.path) as url
-FROM file_mirror_files as files
-LEFT JOIN file_mirror as mirror ON files.fmid=mirror.fmid
-WHERE files.fid=%d
-AND mirror.active=1
-AND files.active=1
-ORDER BY files.md5check',array($res[$i]['fid']));
+
+	_file_mirror_createquery($query,$vars, $logical,'f.filename LIKE BINARY "%s"', $req['filename']);
+	_file_mirror_createquery($query,$vars, $logical,'c.name LIKE BINARY "%s"', $req['category']);
+	_file_mirror_createquery($query,$vars, $logical,'a.springname LIKE BINARY "%s"', $req['springname']);
+
+	if($query!="")
+		$query="WHERE ".$query;
+	$result=db_query("SELECT
+		f.fid as fid,
+		f.filename as filename,
+		f.filepath as filepath,
+		h.md5 as md5,
+		a.springname as springname,
+		c.name as category,
+		f.filesize as size,
+		f.timestamp as timestamp
+		FROM files as f
+		LEFT JOIN springdata_archives as a ON f.fid=a.fid
+		LEFT JOIN springdata_categories as c ON a.cid=c.cid
+		LEFT JOIN filehash as h ON f.fid=h.fid
+		$query
+		ORDER BY f.fid DESC
+		LIMIT 0,10
+		",
+		$vars
+	);
+	$res=array();
 	while($row = db_fetch_array($result)){
-		$res[$i]['mirrors'][]=$row['url'];
+		//add primary server
+		$row['mirrors']=array($base_url.'/'.$row['filepath']);
+		unset($row['filepath']);
+		$res[]=$row;
 	}
-	if(isset($req['torrent']))
-		$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
-	//randomize order of result
-	shuffle($res[$i]['mirrors']);
-	unset($res[$i]['fid']);
-	if ($res[$i]['springname']=="")
-		unset($res[$i]['springname']);
-}
-$count=count($res);
-if ($count<>1)
-	watchdog("searchapi", "results: ".$count." request: ".$req['category']." ".$req['filename']." ".$req['springname']." ".$req['logical'].file_mirror_backtrace());
-return $res;
+
+	for($i=0;$i<count($res);$i++){
+		//search + add depends to file
+		$result=db_query("SELECT archives.springname as springname, depends_string
+			FROM {springdata_depends} AS depends
+			LEFT JOIN {springdata_archives} AS archives ON depends.depends=archives.fid
+			WHERE depends.fid=%d",$res[$i]['fid']);
+		while($row = db_fetch_array($result)){
+			if(!is_array($res[$i]['depends']))
+				$res[$i]['depends']=array();
+			if(strlen($row['springname'])<=0) // 0 means it wasn't resolveable, return the string
+				$res[$i]['depends'][]=$row['depends_string'];
+			else //is resolveable, return string from archive
+				$res[$i]['depends'][]=$row['springname'];
+		}
+		//search + add additional mirrors to file
+		$result=db_query('SELECT CONCAT(mirror.url_prefix,"/",files.path) as url
+			FROM file_mirror_files as files
+			LEFT JOIN file_mirror as mirror ON files.fmid=mirror.fmid
+			WHERE files.fid=%d
+			AND mirror.active=1
+			AND files.active=1
+			ORDER BY files.md5check',array($res[$i]['fid']));
+		while($row = db_fetch_array($result)){
+			$res[$i]['mirrors'][]=$row['url'];
+		}
+		if(isset($req['torrent']))
+			$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
+		//randomize order of result
+		shuffle($res[$i]['mirrors']);
+		unset($res[$i]['fid']);
+		if ($res[$i]['springname']=="")
+			unset($res[$i]['springname']);
+	}
+	$count=count($res);
+	if ($count<>1)
+		watchdog("searchapi", "results: ".$count." request: ".$req['category']." ".$req['filename']." ".$req['springname']." ".$req['logical'].file_mirror_backtrace());
+	return $res;
 }
 
