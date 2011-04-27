@@ -27,6 +27,19 @@ function _file_mirror_gettorrent($filename){
 	return "";
 }
 
+function _file_mirror_getlink($fid){
+	$res=db_query("SELECT nid FROM {content_field_file} as c WHERE field_file_fid=%d
+", array($fid));
+	$nid=db_result($res);
+	if ($nid<=0)
+		return "";
+	$res=db_query("SELECT dst FROM {url_alias} WHERE src='%s'",array("node/$nid"));
+	$url=db_result($res);
+	if (strlen($url)>0)
+		return "http://springfiles.com/$url";
+	return "http://springfiles.com/node/$nid";
+}
+
 /**
 *	implementation of the xml-rpc call
 */
@@ -105,6 +118,7 @@ function file_mirror_xmlsearch($req){
 		}
 		if(isset($req['torrent']))
 			$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
+		$res[$i]['description']=_file_mirror_getlink($res[$i]['fid']);
 		//randomize order of result
 		shuffle($res[$i]['mirrors']);
 		unset($res[$i]['fid']);
