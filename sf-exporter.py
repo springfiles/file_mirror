@@ -48,7 +48,7 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		print "[skip] " +filename + " already exists, skipping..."
 	else:
 		doc = minidom.Document()
-		archive = doc.createElement("archive")
+		archive = doc.createElement("Archive")
 		getXmlData(doc, archive, "Type", "Map")
 		getXmlData(doc, archive, "Name", usync.GetMapName(idx))
 		getXmlData(doc, archive, "Author", usync.GetMapAuthor(idx))
@@ -147,7 +147,7 @@ def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount, archive
 		return
 	doc = minidom.Document()
 	archive = doc.createElement("Archive")
-	doc.appendChild(game)
+	doc.appendChild(archive)
 	version=usync.GetPrimaryModVersion(idx)
 	if springname.endswith(version) : # Hack to get version independant string
 		springname=springname[:len(springname)-len(version)]
@@ -157,7 +157,7 @@ def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount, archive
 	getXmlData(doc, archive, "Name", springname)
 	getXmlData(doc, archive, "Description", usync.GetPrimaryModDescription(idx))
 	getXmlData(doc, archive, "Version", version)
-	getGameDepends(usync, idx, gamesarchivecount, doc, game)
+	getGameDepends(usync, idx, gamesarchivecount, doc, archive)
 	tmp=".tmp.xml"
 	f=open(tmp, 'w')
 	f.write(doc.toxml("utf-8"))
