@@ -48,23 +48,24 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		print "[skip] " +filename + " already exists, skipping..."
 	else:
 		doc = minidom.Document()
-		smap = doc.createElement("Map")
-		getXmlData(doc, smap, "Name", usync.GetMapName(idx))
-		getXmlData(doc, smap, "Author", usync.GetMapAuthor(idx))
-		getXmlData(doc, smap, "Description", usync.GetMapDescription(idx))
+		archive = doc.createElement("archive")
+		getXmlData(doc, archive, "Type", "Map")
+		getXmlData(doc, archive, "Name", usync.GetMapName(idx))
+		getXmlData(doc, archive, "Author", usync.GetMapAuthor(idx))
+		getXmlData(doc, archive, "Description", usync.GetMapDescription(idx))
 		#ExtractorRadius
-		getXmlData(doc, smap, "Gravity", str(usync.GetMapGravity(idx)))
+		getXmlData(doc, archive, "Gravity", str(usync.GetMapGravity(idx)))
 		#HumanName
 		#MaxMetal
-		getXmlData(doc, smap, "MaxWind", str(usync.GetMapWindMax(idx)))
-		getXmlData(doc, smap, "MinWind", str(usync.GetMapWindMin(idx)))
+		getXmlData(doc, archive, "MaxWind", str(usync.GetMapWindMax(idx)))
+		getXmlData(doc, archive, "MinWind", str(usync.GetMapWindMin(idx)))
 		#Options
-		getMapPositions(usync,doc,idx,smap)
+		getMapPositions(usync,doc,idx,archive)
 		#TidalStrength
 		#Checksum
 		#ArchiveName
-		getMapDepends(usync,doc,idx,smap,maparchivecount)
-		doc.appendChild(smap)
+		getMapDepends(usync,doc,idx,archive,maparchivecount)
+		doc.appendChild(archive)
 		print "Wrote "+filename
 		tmp=".tmp.xml"
 		metadata = open(tmp,'w')
@@ -145,11 +146,17 @@ def writeGameXmlData(usync, springname, idx, filename,gamesarchivecount, archive
 		print "[skip] " +filename + " already exists, skipping..."
 		return
 	doc = minidom.Document()
-	game = doc.createElement("Game")
+	archive = doc.createElement("Archive")
 	doc.appendChild(game)
-	getXmlData(doc, game, "Name", springname)
-	getXmlData(doc, game, "Description", usync.GetPrimaryModDescription(idx))
-	getXmlData(doc, game, "Version", usync.GetPrimaryModVersion(idx))
+	version=usync.GetPrimaryModVersion(idx)
+	if springname.endswith(version) : # Hack to get version independant string
+		springname=springname[:len(springname)-len(version)]
+		if springname.endswith(" ") : #remove space at end (added through unitsync hack)
+			springname=springname[:len(springname)-1]
+	getXmlData(doc, archive, "Type", "Game")
+	getXmlData(doc, archive, "Name", springname)
+	getXmlData(doc, archive, "Description", usync.GetPrimaryModDescription(idx))
+	getXmlData(doc, archive, "Version", version)
 	getGameDepends(usync, idx, gamesarchivecount, doc, game)
 	tmp=".tmp.xml"
 	f=open(tmp, 'w')
