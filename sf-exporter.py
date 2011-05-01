@@ -66,7 +66,6 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		#ArchiveName
 		getMapDepends(usync,doc,idx,archive,maparchivecount)
 		doc.appendChild(archive)
-		print "Wrote "+filename
 		tmp=".tmp.xml"
 		metadata = open(tmp,'w')
 		metadata.write(doc.toxml("utf-8"))
