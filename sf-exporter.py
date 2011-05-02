@@ -42,6 +42,16 @@ def getMapDepends(usync,doc,idx,Map,maparchivecount):
 		if not deps in springcontent:
 			getXmlData(doc, node, "Depend", str(deps))
 	Map.appendChild(node)
+def getMapResources(usync,doc,idx,Map, maparchivecount):
+	resources = doc.createElement("MapResources")
+	resourceCount=usync.GetMapResourceCount(idx)
+	for i in range (0, resourceCount):
+		resource=doc.createElement("Resource")
+		getXmlData(doc, resource, "Name", str(usync.GetMapResourceName(idx, i)))
+		getXmlData(doc, resource, "Max", str(usync.GetMapResourceMax(idx, i)))
+		getXmlData(doc, resource, "ExtractorRadius", str(usync.GetMapResourceExtractorRadius(idx, i)))
+		resources.appendChild(resource)
+	Map.appendChild(resources)
 
 def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
         if os.path.isfile(filename):
@@ -59,11 +69,20 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		#MaxMetal
 		getXmlData(doc, archive, "MaxWind", str(usync.GetMapWindMax(idx)))
 		getXmlData(doc, archive, "MinWind", str(usync.GetMapWindMin(idx)))
-		#Options
+                getXmlData(doc, archive, "TidalStrenght", str(usync.GetMapTidalStrength(idx)))
+
+		getXmlData(doc, archive, "Height", str(usync.GetMapHeight(idx)))
+		getXmlData(doc, archive, "Width", str(usync.GetMapWidth(idx)))
+
+                getXmlData(doc, archive, "Gravity", str(usync.GetMapGravity(idx)))
+                getXmlData(doc, archive, "FileName", str(usync.GetMapFileName(idx)))
+# crashes here:
+#                getXmlData(doc, archive, "MapMinHeight", str(usync.GetMapMinHeight(idx)))
+#                getXmlData(doc, archive, "MapMaxHeight", str(usync.GetMapMaxHeight(idx)))
+
+		getMapResources(usync, doc, idx,archive, maparchivecount)
+
 		getMapPositions(usync,doc,idx,archive)
-		#TidalStrength
-		#Checksum
-		#ArchiveName
 		getMapDepends(usync,doc,idx,archive,maparchivecount)
 		doc.appendChild(archive)
 		tmp=".tmp.xml"
