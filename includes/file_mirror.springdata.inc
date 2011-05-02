@@ -25,6 +25,53 @@ function _springdata_import_archive($fid,$xml,$catid){
 	}
 	return true;
 }
+/*
+	@param xml xml object for file
+	@param fid file id of added file
+*/
+function _springdata_add_node($xml, $fid){
+	$cat=(string)$xml->Type[0];
+	if($cat=="Game")
+		$cat="type='category' and title='Games'";
+	else if ($cat=="Map")
+		$cat="type='category' and title='Spring Maps'";
+	else{
+		watchdog("file_mirror", "category not detected".(string)$xml->Type[0]);
+		return;
+	}
+	$res=db_query("SELECT nid FROM {node} WHERE ".$cat);
+	$cat=intval(db_result($res));
+	if ($cat<=0){
+		watchdog("file_mirror", "category not found $cat");
+		return;
+	}
+	$file=field_file_load($fid);
+	if (!is_array($file)){
+		watchdog("file_mirror", "couldn't load file $fid");
+		return;
+	}
+
+
+	$res=db_query("SELECT nid FROM {content_field_file} WHERE field_file_fid=%d",array($fid));
+	$nid=intval(db_result($res));
+	if($nid>0){
+		watchdog("file_mirror", "node already exists: $nid");
+		return;
+	}
+	$node = new stdClass();
+	$node->name = (string)$xml->Name[0];
+	$node->title = (string)$xml->Name[0];
+	$node->type = 'file';
+	$node->field_event_speaker_image = field_file_load($filepath);
+	$node->created = time();
+	$node->field_category[0]['nid']=$cat;
+	$node->body = (string)$xml->Description[0];
+	$node->field_version[0]['value']=(string)$xml->Version[0];
+	$node->field_file[0]=$file;
+	$node->language='en';
+
+	node_save($node);
+}
 
 function file_mirror_import_xml(){
 	//path where files from spring persists
@@ -61,6 +108,7 @@ AND LEFT(files.filepath,%d)='%s'",array(strlen($springfiles),$springfiles));
 			continue;
 		}
 		_springdata_import_archive($row['fid'],$xml,$catid);
+		_springdata_add_node($xml, $row['fid']);
 	}
 }
 
