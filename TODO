@@ -2,25 +2,8 @@
 #export script
 
  * remove hardcoded paths in sf-exporter.py
+ * extract /bitmaps/loadpictures/<md5sum>.png + add to .xml & import at node creation
 
 #xml-rpc
 
  * add more xml-rpc functions to get more data (link to minimap for example)
- * allow registering url/file by script
-
-
-( username=youruseraccount@springfiles
-password=password )
-
-publisher=some name (name of publisher holding copyrights)
-category=spring/games (category of file)
-url=http://zero-k.info/games/zk-0.9.sd7 (where to download file)
-
-name=Zero-K (name without number)
-version=0.9 (has to be a float!)
-description="ChangeLog: blab bla
-
-bla bla
-
-"
-
