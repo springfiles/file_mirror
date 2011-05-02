@@ -32,14 +32,14 @@ function _springdata_import_archive($fid,$xml,$catid){
 function _springdata_add_node($xml, $fid){
 	$cat=(string)$xml->Type[0];
 	if($cat=="Game")
-		$cat="type='category' and title='Games'";
+		$cat_sel="type='category' and title='Games'";
 	else if ($cat=="Map")
-		$cat="type='category' and title='Spring Maps'";
+		$cat_sel="type='category' and title='Spring Maps'";
 	else{
 		watchdog("file_mirror", "category not detected".(string)$xml->Type[0]);
 		return;
 	}
-	$res=db_query("SELECT nid FROM {node} WHERE ".$cat);
+	$res=db_query("SELECT nid FROM {node} WHERE ".$cat_sel);
 	$cat=intval(db_result($res));
 	if ($cat<=0){
 		watchdog("file_mirror", "category not found $cat");
@@ -62,13 +62,19 @@ function _springdata_add_node($xml, $fid){
 	$node->name = (string)$xml->Name[0];
 	$node->title = (string)$xml->Name[0];
 	$node->type = 'file';
-	$node->field_event_speaker_image = field_file_load($filepath);
 	$node->created = time();
 	$node->field_category[0]['nid']=$cat;
 	$node->body = (string)$xml->Description[0];
 	$node->field_version[0]['value']=(string)$xml->Version[0];
 	$node->field_file[0]=$file;
 	$node->language='en';
+	if ($cat=="Game"){ //add game specific data
+	}else if ($cat=="Map"){ //add map specific data
+		//add map size
+		$node->field_mapsizex[0]['value']=$xml->Width;
+		$node->field_mapsizey[0]['value']=$xml->Height;
+//		$node->field_image[0]['value']=$xml->Height;
+	}
 
 	node_save($node);
 }
@@ -98,13 +104,13 @@ AND LEFT(files.filepath,%d)='%s'",array(strlen($springfiles),$springfiles));
 			continue;
 		}
 		$catid=0;
-		if ($xml->getName()=='Game'){
+		if ($xml->Type[0]=='Game'){
 			$catid=$cat['games'];
-		}else if ($xml->getName()=='Map'){
+		}else if ($xml->Type[0]=='Map'){
 			$catid=$cat['maps'];
 		}
 		if($catid<=0){
-			watchdog("springdata", "Invalid catid: $catid read from $xmlfile cat :" . $xml->getName().$cat['games'].$cat['maps']);
+			watchdog("springdata", "Invalid catid: $catid read from $xmlfile cat :" . $xml->Type[0].$cat['games'].$cat['maps']);
 			continue;
 		}
 		_springdata_import_archive($row['fid'],$xml,$catid);
