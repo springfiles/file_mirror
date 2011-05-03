@@ -60,7 +60,8 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		doc = minidom.Document()
 		archive = doc.createElement("Archive")
 		getXmlData(doc, archive, "Type", "Map")
-		getXmlData(doc, archive, "Name", usync.GetMapName(idx))
+		mapname=usync.GetMapName(idx)
+		getXmlData(doc, archive, "Name", mapname)
 		getXmlData(doc, archive, "Author", usync.GetMapAuthor(idx))
 		getXmlData(doc, archive, "Description", usync.GetMapDescription(idx))
 		#ExtractorRadius
@@ -76,9 +77,8 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 
                 getXmlData(doc, archive, "Gravity", str(usync.GetMapGravity(idx)))
                 getXmlData(doc, archive, "FileName", str(usync.GetMapFileName(idx)))
-# crashes here:
-#                getXmlData(doc, archive, "MapMinHeight", str(usync.GetMapMinHeight(idx)))
-#                getXmlData(doc, archive, "MapMaxHeight", str(usync.GetMapMaxHeight(idx)))
+                getXmlData(doc, archive, "MapMinHeight", str(usync.GetMapMinHeight(mapname)))
+                getXmlData(doc, archive, "MapMaxHeight", str(usync.GetMapMaxHeight(mapname)))
 
 		getMapResources(usync, doc, idx,archive, maparchivecount)
 
