@@ -64,10 +64,7 @@ def writeMapXmlData(usync, smap, idx, filename,maparchivecount,archivename):
 		getXmlData(doc, archive, "Name", mapname)
 		getXmlData(doc, archive, "Author", usync.GetMapAuthor(idx))
 		getXmlData(doc, archive, "Description", usync.GetMapDescription(idx))
-		#ExtractorRadius
 		getXmlData(doc, archive, "Gravity", str(usync.GetMapGravity(idx)))
-		#HumanName
-		#MaxMetal
 		getXmlData(doc, archive, "MaxWind", str(usync.GetMapWindMax(idx)))
 		getXmlData(doc, archive, "MinWind", str(usync.GetMapWindMin(idx)))
                 getXmlData(doc, archive, "TidalStrenght", str(usync.GetMapTidalStrength(idx)))
