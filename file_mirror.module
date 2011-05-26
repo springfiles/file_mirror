@@ -123,6 +123,18 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
 * notify cron job about changes
 */
 function _create_touch_file($filename){
+/*
+	$timeout=5;
+	$sock = stream_socket_client('unix:///full/path/to/my/socket.sock', $errno, $errstr, $timeout);
+	if(!$sock){
+		watchdog("filemirror", "error connecting to upq socket");
+	}
+	stream_set_timeout($sock, $timeout);
+	fwrite($sock, "new_file $filename\n");
+	$res=fgets();
+	watchdog("filemirror", $res);
+	fclose($sock);
+*/
 	$touchfile=MIRROR_PATH."./.modified";
 	watchdog("filemirror", "file ".$filename." was uploaded, notifying system cron with ".$touchfile);
 	touch($touchfile);
