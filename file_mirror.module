@@ -122,22 +122,17 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
 /**
 * notify cron job about changes
 */
-function _create_touch_file($filename){
-/*
+function _create_touch_file($fid){
 	$timeout=5;
-	$sock = stream_socket_client('unix:///full/path/to/my/socket.sock', $errno, $errstr, $timeout);
+	$sock = stream_socket_client('unix:///tmp/.upq-incoming.sock', $errno, $errstr, $timeout);
 	if(!$sock){
-		watchdog("filemirror", "error connecting to upq socket");
+		watchdog("filemirror", "error connecting to upq socket $errstr");
 	}
 	stream_set_timeout($sock, $timeout);
-	fwrite($sock, "new_file $filename\n");
+	fwrite($sock, "new_file fid:$fid\n");
 	$res=fgets();
-	watchdog("filemirror", $res);
+	watchdog("filemirror", "result from upq: $res")
 	fclose($sock);
-*/
-	$touchfile=MIRROR_PATH."./.modified";
-	watchdog("filemirror", "file ".$filename." was uploaded, notifying system cron with ".$touchfile);
-	touch($touchfile);
 }
 
 /**
@@ -182,7 +177,7 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
 				$pos=strpos($node->field_file[0][filepath], MIRROR_PATH);
 				if ($pos!==false){
 					if ($pos==0){
-						_create_touch_file($node->field_file[0][filepath]);
+						_create_touch_file($node->field_file[0]['fid']);
 					}
 				}
 			break;
