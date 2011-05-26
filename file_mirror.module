@@ -27,11 +27,11 @@ function file_mirror_cron() {
 		//import xml data (required for xmlrpc-search)
 		file_mirror_import_xml();
 		//download files that where added to queue via xml-rpc api
-		file_mirror_cronupload();
+#		file_mirror_cronupload();
 		//check for remote md5 hash
-		file_mirror_check_md5(50);
+#		file_mirror_check_md5(50);
 		//upload files to mirror and updates the mirror file index in db
-		file_mirror_upload_contents();
+#		file_mirror_upload_contents();
 	}
 }
 
