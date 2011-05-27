@@ -131,7 +131,7 @@ function _create_touch_file($fid){
 	stream_set_timeout($sock, $timeout);
 	fwrite($sock, "new_file fid:$fid\n");
 	$res=fgets();
-	watchdog("filemirror", "result from upq: $res")
+	watchdog("filemirror", "result from upq: $res");
 	fclose($sock);
 }
 
