@@ -125,14 +125,15 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
 function _create_touch_file($fid){
 	$timeout=5;
 	$sock = stream_socket_client('unix:///tmp/.upq-incoming.sock', $errno, $errstr, $timeout);
-	if(!$sock){
+	if($sock===FALSE){
 		watchdog("filemirror", "error connecting to upq socket $errstr");
+		return;
 	}
 	stream_set_timeout($sock, $timeout);
 	fwrite($sock, "new_file fid:$fid\n");
-	$res=fgets();
-	watchdog("filemirror", "result from upq: $res");
+	$res=fgets($sock);
 	fclose($sock);
+	watchdog("filemirror", "result from upq: $res")
 }
 
 /**
