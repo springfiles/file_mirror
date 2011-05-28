@@ -133,7 +133,7 @@ function _create_touch_file($fid){
 	fwrite($sock, "new_file fid:$fid\n");
 	$res=fgets($sock);
 	fclose($sock);
-	watchdog("filemirror", "result from upq: $res")
+	watchdog("filemirror", "result from upq: $res");
 }
 
 /**
