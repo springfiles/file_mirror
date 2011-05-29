@@ -93,7 +93,7 @@ function file_mirror_xmlsearch($req){
 
 	for($i=0;$i<count($res);$i++){
 		//search + add depends to file
-		$result=db_query("SELECT archives.springname as springname, depends_string
+		$result=db_query("SELECT CONCAT(archives.name, archives.version) as springname, depends_string
 			FROM {springdata_depends} AS depends
 			LEFT JOIN {springdata_archives} AS archives ON depends.depends=archives.fid
 			WHERE depends.fid=%d",$res[$i]['fid']);
