@@ -90,7 +90,7 @@ function file_mirror_import_xml(){
 	}
 	$result=db_query("SELECT files.fid as fid,filepath as filepath FROM {files}
 LEFT JOIN {springdata_archives} AS archives ON archives.fid=files.fid
-WHERE archives.springname IS NULL
+WHERE archives.name IS NULL
 AND LEFT(files.filepath,%d)='%s'",array(strlen($springfiles),$springfiles));
 
 	while($row=db_fetch_array($result)){

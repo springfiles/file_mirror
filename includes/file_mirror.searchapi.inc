@@ -59,7 +59,7 @@ function file_mirror_xmlsearch($req){
 
 	_file_mirror_createquery($query,$vars, $logical,'f.filename LIKE BINARY "%s"', $req['filename']);
 	_file_mirror_createquery($query,$vars, $logical,'c.name LIKE BINARY "%s"', $req['category']);
-	_file_mirror_createquery($query,$vars, $logical,'a.springname LIKE BINARY "%s"', $req['springname']);
+	_file_mirror_createquery($query,$vars, $logical,'CONCAT(a.name,a.version) LIKE BINARY "%s"', $req['springname']);
 
 	if($query!="")
 		$query=" AND (".$query.")";
@@ -68,7 +68,7 @@ function file_mirror_xmlsearch($req){
 		f.filename as filename,
 		f.filepath as filepath,
 		h.md5 as md5,
-		a.springname as springname,
+		CONCAT(a.name,a.version) as springname,
 		c.name as category,
 		f.filesize as size,
 		f.timestamp as timestamp
