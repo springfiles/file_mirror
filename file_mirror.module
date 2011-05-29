@@ -20,19 +20,15 @@ $connection = array();
 
 
 function file_mirror_cron() {
-	global $argv;  
-  	if (!$argv[1]=='--mirror=1'){
-		watchdog("filemirror", "run with php cron.php --mirror=1 to do a mirroring run." );
-	}else{
-		//import xml data (required for xmlrpc-search)
-		file_mirror_import_xml();
-		//download files that where added to queue via xml-rpc api
-#		file_mirror_cronupload();
-		//check for remote md5 hash
-#		file_mirror_check_md5(50);
-		//upload files to mirror and updates the mirror file index in db
-#		file_mirror_upload_contents();
-	}
+	watchdog("filemirror", "importing springdata" );
+	//import xml data (required for xmlrpc-search)
+	file_mirror_import_xml();
+	//download files that where added to queue via xml-rpc api
+#	file_mirror_cronupload();
+	//check for remote md5 hash
+#	file_mirror_check_md5(50);
+	//upload files to mirror and updates the mirror file index in db
+#	file_mirror_upload_contents();
 }
 
 function file_mirror_menu() {
