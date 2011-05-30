@@ -68,7 +68,8 @@ function file_mirror_xmlsearch($req){
 		f.filename as filename,
 		f.filepath as filepath,
 		h.md5 as md5,
-		CONCAT(a.name,' ',a.version) as springname,
+		a.name as name,
+		a.version as version,
 		c.name as category,
 		f.filesize as size,
 		f.timestamp as timestamp
@@ -102,8 +103,9 @@ function file_mirror_xmlsearch($req){
 				$res[$i]['depends']=array();
 			if(strlen($row['springname'])<=0) // 0 means it wasn't resolveable, return the string
 				$res[$i]['depends'][]=$row['depends_string'];
-			else //is resolveable, return string from archive
+			else{ //is resolveable, return string from archive
 				$res[$i]['depends'][]=$row['springname'];
+			}
 		}
 		//search + add additional mirrors to file
 		$result=db_query('SELECT CONCAT(mirror.url_prefix,"/",files.path) as url
@@ -122,8 +124,10 @@ function file_mirror_xmlsearch($req){
 		//randomize order of result
 		shuffle($res[$i]['mirrors']);
 		unset($res[$i]['fid']);
-		if ($res[$i]['springname']=="")
-			unset($res[$i]['springname']);
+		if ($res[$i]['version']=="")
+			$res[$i]['springname']=$res[$i]['name'];
+		else
+			$res[$i]['springname']=$res[$i]['name']." ".$res[$i]['version'];
 	}
 	$count=count($res);
 	if ($count<>1)
