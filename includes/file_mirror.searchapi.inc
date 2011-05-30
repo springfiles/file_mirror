@@ -15,7 +15,11 @@ function _file_mirror_createquery(&$query, &$vars, $logical,$condition, $data){
 		return;
 	$query.=" ".$logical." ".$condition;
 	$data=str_replace("_","\_",$data);
-	array_push($vars, $data);
+	if (is_array($data)){
+		foreach($data as $val)
+			array_push($vars, $val);
+	}else
+		array_push($vars, $data);
 }
 
 function _file_mirror_gettorrent($filename){
@@ -59,7 +63,7 @@ function file_mirror_xmlsearch($req){
 
 	_file_mirror_createquery($query,$vars, $logical,'f.filename LIKE BINARY "%s"', $req['filename']);
 	_file_mirror_createquery($query,$vars, $logical,'c.name LIKE BINARY "%s"', $req['category']);
-	_file_mirror_createquery($query,$vars, $logical,"CONCAT(a.name,' ',a.version) LIKE BINARY '%s'", $req['springname']);
+	_file_mirror_createquery($query,$vars, $logical,"CONCAT(a.name,' ',a.version) LIKE BINARY '%s' OR a.name LIKE BINARY '%s'", array($req['springname'],$req['springname']));
 
 	if($query!="")
 		$query=" AND (".$query.")";
