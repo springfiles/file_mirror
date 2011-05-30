@@ -59,7 +59,7 @@ function file_mirror_xmlsearch($req){
 
 	_file_mirror_createquery($query,$vars, $logical,'f.filename LIKE BINARY "%s"', $req['filename']);
 	_file_mirror_createquery($query,$vars, $logical,'c.name LIKE BINARY "%s"', $req['category']);
-	_file_mirror_createquery($query,$vars, $logical,'CONCAT(a.name,a.version) LIKE BINARY "%s"', $req['springname']);
+	_file_mirror_createquery($query,$vars, $logical,"CONCAT(a.name,' ',a.version) LIKE BINARY '%s'", $req['springname']);
 
 	if($query!="")
 		$query=" AND (".$query.")";
@@ -68,7 +68,7 @@ function file_mirror_xmlsearch($req){
 		f.filename as filename,
 		f.filepath as filepath,
 		h.md5 as md5,
-		CONCAT(a.name,a.version) as springname,
+		CONCAT(a.name,' ',a.version) as springname,
 		c.name as category,
 		f.filesize as size,
 		f.timestamp as timestamp
@@ -93,7 +93,7 @@ function file_mirror_xmlsearch($req){
 
 	for($i=0;$i<count($res);$i++){
 		//search + add depends to file
-		$result=db_query("SELECT CONCAT(archives.name, archives.version) as springname, depends_string
+		$result=db_query("SELECT CONCAT(archives.name,' ',archives.version) as springname, depends_string
 			FROM {springdata_depends} AS depends
 			LEFT JOIN {springdata_archives} AS archives ON depends.depends=archives.fid
 			WHERE depends.fid=%d",$res[$i]['fid']);
