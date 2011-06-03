@@ -3,12 +3,8 @@
 // Load module libraries
 require_once ( dirname(__FILE__) . '/includes/file_mirror.debug.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.contents.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.springdata.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.searchapi.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.ftp.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.md5.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.upload.inc');
 
 //defaults
 define('UPLOADSPERCRON', 10); //number of uploads to a particular mirror at every cron run
@@ -23,12 +19,6 @@ function file_mirror_cron() {
 	watchdog("filemirror", "importing springdata" );
 	//import xml data (required for xmlrpc-search)
 	file_mirror_import_xml();
-	//download files that where added to queue via xml-rpc api
-#	file_mirror_cronupload();
-	//check for remote md5 hash
-#	file_mirror_check_md5(50);
-	//upload files to mirror and updates the mirror file index in db
-#	file_mirror_upload_contents();
 }
 
 function file_mirror_menu() {
