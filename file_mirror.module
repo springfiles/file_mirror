@@ -110,9 +110,9 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
 */
 function _create_touch_file($fid){
 	$timeout=5;
-	$sock = stream_socket_client('unix:///tmp/.upq-incoming.sock', $errno, $errstr, $timeout);
+	$sock = @stream_socket_client('unix:///tmp/.upq-incoming.sock', $errno, $errstr, $timeout);
 	if($sock===FALSE){
-		watchdog("filemirror", "error connecting to upq socket $errstr");
+		watchdog("filemirror", "error connecting to upq socket $errstr $fid");
 		return;
 	}
 	stream_set_timeout($sock, $timeout);
