@@ -11,6 +11,8 @@ optional parameters:
 	logical = and | or
 	torrent = true
 
+the file_mirror module allows to search through this data, look at exampleclient.py to see, how it works.
+
 ###springfiles.upload
 notifies springfiles.com about a new file. After a short time, the file will be downloaded and added to the file mirroring system.
 
@@ -22,9 +24,4 @@ required parameters:
 	url
 
 
-##sf-exporter.py
-sf-exporter.py is a script to extract data of the game files into a textfile. the springdata module then picks up this data on a cron run and installs it into a database.
-to start the export process simple type ./sf-exporter.py in the modules dir.
-
-the file_mirror module allows to search through this data, look at exampleclient.py to see, how it works.
 
