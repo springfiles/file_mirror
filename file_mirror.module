@@ -5,6 +5,7 @@ require_once ( dirname(__FILE__) . '/includes/file_mirror.debug.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.springdata.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.searchapi.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.fileinfo.inc');
 
 //defaults
 define('UPLOADSPERCRON', 10); //number of uploads to a particular mirror at every cron run
@@ -231,6 +232,12 @@ function file_mirror_xmlrpc(){
 			'file_mirror_uploadfile',
 			array("string", "struct"), //function signature //FIXME remove "string" (drupal bug?)
 			t('Handling a upload request'),
+		);
+	$methods[] = array(
+			'springfiles.fileinfo',
+			'file_mirror_fileinfo',
+			array("string", "struct"),
+			t('Returning info about a specific file'),
 		);
 	return $methods;
 }
