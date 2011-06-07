@@ -126,6 +126,8 @@ function file_mirror_xmlsearch($req){
 			$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
 		$res[$i]['description']=_file_mirror_getlink($res[$i]['fid']);
 		//randomize order of result
+		if (count($res[$i]['mirrors'])>2) //remove main mirror to reduce load if enough alternatives are avaiable
+			array_shift($res[$i]['mirrors']);
 		shuffle($res[$i]['mirrors']);
 		unset($res[$i]['fid']);
 		if ($res[$i]['version']=="")
