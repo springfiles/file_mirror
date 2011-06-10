@@ -161,43 +161,36 @@ function file_mirror_uploadfile($req){
 	@param xml xml object for file
 	@param fid file id of added file
 */
-function _springdata_add_node($xml, $fid){
-	$cat=(string)$xml->Type[0];
+function _springdata_add_node($fid, $name,$version, $cat, $description){
 	if($cat=="Game")
 		$cat_sel="type='category' and title='Games'";
 	else if ($cat=="Map")
 		$cat_sel="type='category' and title='Spring Maps'";
 	else{
-		watchdog("file_mirror", "category not detected".(string)$xml->Type[0]);
-		return;
+		return "category not detected $cat";
 	}
 	$res=db_query("SELECT nid FROM {node} WHERE ".$cat_sel);
 	$cat=intval(db_result($res));
 	if ($cat<=0){
-		watchdog("file_mirror", "category not found $cat");
-		return;
+		return "category not found $cat";
 	}
 	$file=field_file_load($fid);
 	if (!is_array($file)){
-		watchdog("file_mirror", "couldn't load file $fid");
-		return;
+		return "couldn't load file $fid";
 	}
-
-
 	$res=db_query("SELECT nid FROM {content_field_file} WHERE field_file_fid=%d",array($fid));
 	$nid=intval(db_result($res));
 	if($nid>0){
-		watchdog("file_mirror", "node already exists: $nid");
-		return;
+		return "node already exists: $nid";
 	}
 	$node = new stdClass();
-	$node->name = (string)$xml->Name[0];
-	$node->title = (string)$xml->Name[0];
+	$node->name = $title;
+	$node->title = $title;
 	$node->type = 'file';
 	$node->created = time();
 	$node->field_category[0]['nid']=$cat;
-	$node->body = (string)$xml->Description[0];
-	$node->field_version[0]['value']=(string)$xml->Version[0];
+	$node->body = $description;
+	$node->field_version[0]['value']=$version;
 	$node->field_file[0]=$file;
 	$node->language='en';
 	if ($cat=="Game"){ //add game specific data
@@ -207,12 +200,22 @@ function _springdata_add_node($xml, $fid){
 		$node->field_mapsizey[0]['value']=$xml->Height;
 //		$node->field_image[0]['value']=$xml->Height;
 	}
-
 	node_save($node);
+	return "success";
 }
 
 function file_mirror_createnode($req){
-	return $req;
+        $params = array( 'name' => $req['username'],
+                        'pass' => $req['password']);
+        $user=user_authenticate($params);
+        if (!is_object($user))
+                return "Invalid username/password";
+	$fid=intval($req['fid']);
+	$name=$req['name'];
+	$version=$req['version'];
+	$cat=$req['cat'];
+	$description=$req['description'];
+	return _springdata_add_node($fid, $name,$version, $cat, $description);
 }
 
 
@@ -258,3 +261,4 @@ function file_mirror_fileinfo($req){
 	}
 	return $res;
 }
+
