@@ -164,45 +164,28 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
   }
 }
 
-
-//get all mirror file data by fid
+/**
+@return a random filemirror, excluding master if mirrorcount > 2
+TODO: should change this later into the preferred mirror to the client
+*/
 function file_mirror_get_fid_mirrors($fid) {
-  $q = db_query("SELECT * FROM {file_mirror_files} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.active = 1 AND fm.fid = %d AND f.active=1", array($fid));
-  while ($records = db_fetch_object($q)) {
-    $array[] = $records;
-  }
-  $q = db_query("SELECT * FROM {file_mirror_files2} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.fid = %d AND f.active=1", array($fid));
-  while ($records = db_fetch_object($q)) {
-    $array[] = $records;
-  }
-  $records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'CZ' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
-  $records->path = str_replace(file_directory_path(), '', $records->path);
-  $records->path = 'downloadmain/'.$fid;
-  $array[] = $records;
-  shuffle($array);
-  
-  return $array;
+	$q = db_query("SELECT * FROM {file_mirror_files} m LEFT JOIN {file_mirror} f ON m.fmid = f.fmid WHERE m.active = 1 AND m.fid = %d ORDER BY RAND()", array($fid));
+	while ($records = db_fetch_object($q)){
+		$array[] = $records;
+	}
+	if (count($array)<2){ //few mirrors found, add main mirror
+		$records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'CZ' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
+		$records->path = str_replace(file_directory_path(), '', $records->path);
+		$records->path = 'downloadmain/'.$fid;
+		$array[] = $records;
+	}
+	shuffle($array);
+	return $array;
 }
 
-//returns a random filemirror
-//should change this later into the preferred mirror to the client
-function file_mirror_get_fid_defaultMirror($fid) {
-  $q = db_query("SELECT * FROM {file_mirror_files} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.active = 1 AND fm.fid = %d ORDER BY RAND() LIMIT 0,1", array($fid));
-  while ($records = db_fetch_object($q)){
-    $array[] = $records;
-  }
-  $q = db_query("SELECT * FROM {file_mirror_files2} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.fid = %d ORDER BY RAND() LIMIT 0,1", array($fid));
-  while ($records = db_fetch_object($q)){
-    $array[] = $records;
-  }
-  $records = db_fetch_object(db_query("SELECT 'Main server' as title, 'Netherlands' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
-  $records->path = str_replace(file_directory_path(), '', $records->path);
-  $records->path = 'downloadmain/'.$fid;
-  $array[] = $records;
-  
-  shuffle($array);
-
-  return $array[0];
+function file_mirror_get_fid_defaultMirror($fid){
+	$arr=file_mirror_get_fid_mirrors($fid);
+	return $arr[0];
 }
 
 /**
