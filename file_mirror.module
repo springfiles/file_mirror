@@ -3,24 +3,13 @@
 // Load module libraries
 require_once ( dirname(__FILE__) . '/includes/file_mirror.debug.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.springdata.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.searchapi.inc');
-require_once ( dirname(__FILE__) . '/includes/file_mirror.fileinfo.inc');
+require_once ( dirname(__FILE__) . '/includes/file_mirror.xmlrpc.inc');
 
-//defaults
-define('UPLOADSPERCRON', 10); //number of uploads to a particular mirror at every cron run
 define('FILE_STATUS_REMOTE', 100); //Extra file status definition for files only existing on remote mirrors
 define('MIRROR_PATH', 'sites/default/files/downloads/spring/'); //path with files that will be mirrored
 
 //declare ftp connection;
 $connection = array();
-
-
-function file_mirror_cron() {
-	watchdog("filemirror", "importing springdata" );
-	//import xml data (required for xmlrpc-search)
-	file_mirror_import_xml();
-}
 
 function file_mirror_menu() {
   $items = array();
@@ -109,7 +98,7 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
 /**
 * notify cron job about changes
 */
-function _create_touch_file($fid){
+function _file_mirror_run_upq($job){
 	$timeout=5;
 	$sock = @stream_socket_client('unix:///tmp/.upq-incoming.sock', $errno, $errstr, $timeout);
 	if($sock===FALSE){
@@ -117,10 +106,11 @@ function _create_touch_file($fid){
 		return;
 	}
 	stream_set_timeout($sock, $timeout);
-	fwrite($sock, "new_file fid:$fid\n");
+	fwrite($sock, "$job\n");
 	$res=fgets($sock);
 	fclose($sock);
 	watchdog("filemirror", "result from upq: $res");
+	return $res;
 }
 
 /**
@@ -165,7 +155,8 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
 				$pos=strpos($node->field_file[0][filepath], MIRROR_PATH);
 				if ($pos!==false){
 					if ($pos==0){
-						_create_touch_file($node->field_file[0]['fid']);
+						$fid=$node->field_file[0]['fid'];
+						_file_mirror_run_upq("new_file fid:$fid");
 					}
 				}
 			break;
@@ -238,6 +229,12 @@ function file_mirror_xmlrpc(){
 			'file_mirror_fileinfo',
 			array("string", "struct"),
 			t('Returning info about a specific file'),
+		);
+	$methods[] = array(
+			'springfiles.createnode',
+			'file_mirror_createnode',
+			array("string", "struct"),
+			t('Creates a node'),
 		);
 	return $methods;
 }
