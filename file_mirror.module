@@ -5,7 +5,6 @@ require_once ( dirname(__FILE__) . '/includes/file_mirror.debug.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.admin.inc');
 require_once ( dirname(__FILE__) . '/includes/file_mirror.xmlrpc.inc');
 
-define('FILE_STATUS_REMOTE', 100); //Extra file status definition for files only existing on remote mirrors
 define('MIRROR_PATH', 'sites/default/files/downloads/spring/'); //path with files that will be mirrored
 
 //declare ftp connection;
@@ -169,13 +168,11 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
 //get all mirror file data by fid
 function file_mirror_get_fid_mirrors($fid) {
   $q = db_query("SELECT * FROM {file_mirror_files} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.active = 1 AND fm.fid = %d AND f.active=1", array($fid));
-  while ($records = db_fetch_object($q))
-  {
+  while ($records = db_fetch_object($q)) {
     $array[] = $records;
   }
   $q = db_query("SELECT * FROM {file_mirror_files2} fm INNER JOIN {file_mirror} f ON fm.fmid = f.fmid WHERE fm.fid = %d AND f.active=1", array($fid));
-  while ($records = db_fetch_object($q))
-  {
+  while ($records = db_fetch_object($q)) {
     $array[] = $records;
   }
   $records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'CZ' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
@@ -205,7 +202,7 @@ function file_mirror_get_fid_defaultMirror($fid) {
   
   shuffle($array);
 
-  return $array;
+  return $array[0];
 }
 
 /**
@@ -254,7 +251,7 @@ function file_mirror_load($fmid) {
  * Title callback.
  */
 function file_mirror_page_title($file_mirror) {
-  return $file_mirror->title;
+	return $file_mirror->title;
 }
 
 function file_mirror_access($op, $file_mirror, $account = NULL) {
@@ -302,8 +299,8 @@ function file_mirror_access($op, $file_mirror, $account = NULL) {
 }
 
 function file_mirror_fix_cron() {
-  $q = db_query("DELETE FROM `variable` WHERE name = 'cron_semaphore'");
-  $q = db_query("DELETE FROM `variable` WHERE name = 'cron_last'");
-  $q = db_query("DELETE FROM `variable` WHERE name = 'cron_threshold_semaphore'");
-  return "fixed";
+	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_semaphore'");
+	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_last'");
+	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_threshold_semaphore'");
+	return "fixed";
 }
