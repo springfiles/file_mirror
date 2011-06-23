@@ -74,7 +74,7 @@ function file_mirror_xmlsearch($req){
 		h.md5 as md5,
 		a.name as name,
 		a.version as version,
-		c.name as category,
+		LOWER(c.name) as category,
 		f.filesize as size,
 		f.timestamp as timestamp
 		FROM files as f
