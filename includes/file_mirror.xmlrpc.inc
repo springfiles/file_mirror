@@ -143,7 +143,7 @@ function file_mirror_xmlsearch($req){
 
 function file_mirror_uploadfile($req){
 	watchdog("filemirror", "upload request: ".$req['url']);
-/*	$params = array( 'name' => $req['username'],
+	$params = array( 'name' => $req['username'],
 			'pass' => $req['password']);
 	$user=user_authenticate($params);
 	if (!is_object($user))
@@ -156,8 +156,6 @@ function file_mirror_uploadfile($req){
 	$res=_file_mirror_run_upq("download url:$url sdp:$sdp filename:$filename uid:$uid");
 
 	return $res;
-*/
-	return "";
 }
 
 /*
