@@ -173,12 +173,12 @@ function file_mirror_get_fid_mirrors($fid) {
 	while ($records = db_fetch_object($q)){
 		$array[] = $records;
 	}
-	if (count($array)<2){ //few mirrors found, add main mirror
+//	if (count($array)<2){ //few mirrors found, add main mirror
 		$records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'CZ' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
 		$records->path = str_replace(file_directory_path(), '', $records->path);
 		$records->path = 'downloadmain/'.$fid;
 		$array[] = $records;
-	}
+//	}
 	shuffle($array);
 	return $array;
 }
