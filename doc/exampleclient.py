@@ -12,6 +12,7 @@ proxy = ServerProxy('http://springfiles.com/xmlrpc.php')
 searchstring = {
 #	"category" : "Spring Maps",
 	"logical" : "or",
+	"tag" : sys.argv[1],
 	"filename" : sys.argv[1],
 	"springname" : sys.argv[1],
 	"torrent" : True,
