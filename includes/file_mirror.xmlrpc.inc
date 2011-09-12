@@ -61,14 +61,14 @@ function file_mirror_xmlsearch($req){
 		$logical="AND";
 	}
 
+	_file_mirror_createquery($query,$vars, $logical,'t.tag LIKE BINARY "%s"', $req['tag']);
 	_file_mirror_createquery($query,$vars, $logical,'f.filename LIKE BINARY "%s"', $req['filename']);
 	_file_mirror_createquery($query,$vars, $logical,'c.name LIKE BINARY "%s"', $req['category']);
 	_file_mirror_createquery($query,$vars, $logical,"CONCAT(a.name,' ',a.version) LIKE BINARY '%s' OR a.name LIKE BINARY '%s'", array($req['springname'],$req['springname']));
-
 	if($query!="")
 		$query=" AND (".$query.")";
 	$result=db_query("SELECT
-		f.fid as fid,
+		distinct(f.fid) as fid,
 		f.filename as filename,
 		f.filepath as filepath,
 		h.md5 as md5,
@@ -82,6 +82,7 @@ function file_mirror_xmlsearch($req){
 		LEFT JOIN springdata_archives as a ON f.fid=a.fid
 		LEFT JOIN springdata_categories as c ON a.cid=c.cid
 		LEFT JOIN filehash as h ON f.fid=h.fid
+		LEFT JOIN springdata_archivetags as t ON t.fid=f.fid
 		WHERE c.cid>0
 		$query
 		ORDER BY f.fid DESC
