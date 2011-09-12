@@ -122,6 +122,13 @@ function file_mirror_xmlsearch($req){
 		while($row = db_fetch_array($result)){
 			$res[$i]['mirrors'][]=$row['url'];
 		}
+		//add tags
+		$res[$i]['tags']=array();
+		$result=db_query('SELECT tag FROM {springdata_archivetags}
+			WHERE fid=%d', array($res[$i]['fid']));
+		while($row = db_fetch_array($result)){
+			$res[$i]['tags'][]=$row['tag'];
+		}
 		if(array_key_exists('torrent', $req))
 			$res[$i]['torrent']=_file_mirror_gettorrent($res[$i]['filename']);
 		$res[$i]['description']=_file_mirror_getlink($res[$i]['fid']);
