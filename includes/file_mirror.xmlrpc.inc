@@ -76,7 +76,8 @@ function file_mirror_xmlsearch($req){
 		a.version as version,
 		LOWER(c.name) as category,
 		f.filesize as size,
-		f.timestamp as timestamp
+		f.timestamp as timestamp,
+		a.sdp as sdp
 		FROM files as f
 		LEFT JOIN springdata_archives as a ON f.fid=a.fid
 		LEFT JOIN springdata_categories as c ON a.cid=c.cid
