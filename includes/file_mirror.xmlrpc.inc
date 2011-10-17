@@ -25,7 +25,10 @@ function _file_mirror_createquery(&$query, &$vars, $logical,$condition, $data){
 function _file_mirror_gettorrent($filename){
 	$file=file_directory_path()."/springdata/".$filename.".torrent";
 	if (is_readable($file)){
-		return base64_encode(file_get_contents($file));
+		$res = new stdClass();
+		$res->is_base64=true;
+		$res->data=base64_encode(file_get_contents($file));
+		return $res;
 	}
 	watchdog("file_mirror", "no torrent info for $file");
 	return "";
