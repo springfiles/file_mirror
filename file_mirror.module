@@ -10,30 +10,6 @@ define('MIRROR_PATH', 'sites/default/files/downloads/spring/'); //path with file
 //declare ftp connection;
 $connection = array();
 
-//hook_cron
-function file_mirror_cron() {
-  $date=time();
-  $enddate=$date - ($date % 2678400); //returns timestamp from beginning of this month
-  $result = db_query("select fmid from file_mirror");
-    while ($row = db_fetch_array($result))
-    {
-      $result2 = db_query("SELECT SUM( f.filesize ) as filesize 
-			    FROM  `download_count` d
-			    INNER JOIN files f ON f.fid = d.fid
-			    WHERE d.mirror =%d", array($row['fmid']));
-      $tbw = db_fetch_object($result2);
-      $result3 = db_query("UPDATE file_mirror SET tbw = %d WHERE fmid = %d", array($tbw->filesize, $row['fmid']));
-      $result2 = db_query("SELECT SUM( f.filesize ) as filesize 
-			    FROM  `download_count` d
-			    INNER JOIN files f ON f.fid = d.fid
-			    WHERE d.mirror =%d and d.timestamp<=%d and d.timestamp>=%d", array($row['fmid'], $date, $enddate));
-      $tbw = db_fetch_object($result2);
-      $result3 = db_query("UPDATE file_mirror SET mbw = %d WHERE fmid = %d", array($tbw->filesize, $row['fmid']));
-    }
-}
-
-
-
 function file_mirror_menu() {
   $items = array();
   $items['admin/settings/file-mirror'] = array(
