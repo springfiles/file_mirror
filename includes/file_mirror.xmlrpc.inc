@@ -1,34 +1,55 @@
 <?php
 
-function file_mirror_xmlsearch($req){
+function _file_mirror_getlink($fid){
+	$res=db_query("SELECT nid FROM {content_field_file} as c WHERE field_file_fid=%d
+", array($fid));
+	$nid=db_result($res);
+	if ($nid<=0)
+		return "";
+	$res=db_query("SELECT dst FROM {url_alias} WHERE src='%s'",array("node/$nid"));
+	$url=db_result($res);
+	if (strlen($url)>0)
+		return "http://springfiles.com/$url";
+	return "http://springfiles.com/node/$nid";
+}
+
+/**
+*	implementation of the xml-rpc call
+*/
+
+function _file_mirror_xmlsearch($req){
 	return "Moved to http://upq.springfiles.com/xmlrpc.php";
 }
 
 /*
 	@param xml xml object for file
-	@param fid file id of added file
+	@param sid sync id of the file
+	@return nid of the created node, <0 on error
 */
-function _springdata_add_node($fid, $name,$version, $cat, $description){
+function _springdata_add_node($sid, $name,$version, $cat, $description){
 	if($cat=="Game")
 		$cat_sel="type='category' and title='Games'";
 	else if ($cat=="Map")
 		$cat_sel="type='category' and title='Spring Maps'";
 	else{
-		return "category not detected $cat";
+		watchdog("file_mirror","category not detected $cat");
+		return -1;
 	}
 	$res=db_query("SELECT nid FROM {node} WHERE ".$cat_sel);
 	$cat=intval(db_result($res));
 	if ($cat<=0){
-		return "category not found $cat";
+		watchdog("file_mirror","category $cat not found in db");
+		return -1;
 	}
 	$file=field_file_load($fid);
 	if (!is_array($file)){
-		return "couldn't load file $fid";
+		watchdog("file_mirror","couldn't load file $fid");
+		return -1;
 	}
 	$res=db_query("SELECT nid FROM {content_field_file} WHERE field_file_fid=%d",array($fid));
 	$nid=intval(db_result($res));
 	if($nid>0){
-		return "node already exists: $nid";
+		watchdog("file_mirror", "node already exists: $nid");
 	}
 	$node = new stdClass();
 	$node->name = $title;
@@ -48,23 +69,8 @@ function _springdata_add_node($fid, $name,$version, $cat, $description){
 //		$node->field_image[0]['value']=$xml->Height;
 	}
 	node_save($node);
-	return "success";
+	return $node->nid;
 }
-
-function file_mirror_createnode($req){
-        $params = array( 'name' => $req['username'],
-                        'pass' => $req['password']);
-        $user=user_authenticate($params);
-        if (!is_object($user))
-                return "Invalid username/password";
-	$fid=intval($req['fid']);
-	$name=$req['name'];
-	$version=$req['version'];
-	$cat=$req['cat'];
-	$description=$req['description'];
-	return _springdata_add_node($fid, $name,$version, $cat, $description);
-}
-
 
 /*
 allow request by:
@@ -83,7 +89,7 @@ allow request by:
 
 	</array>
 */
-function file_mirror_fileinfo($req){
+function _file_mirror_fileinfo($req){
 	$fid=intval($req['fid']);
 	if(array_key_exists($req, "list"))
 		$cmp='>';
@@ -109,20 +115,49 @@ function file_mirror_fileinfo($req){
 	return $res;
 }
 
-function file_mirror_uploadfile($req){
-	watchdog("filemirror", "upload request: ".$req['url']);
-	$params = array( 'name' => $req['username'],
-			'pass' => $req['password']);
+function _file_mirror_getlastsyncid($username, $password){
+	$params = array( 'name' => $username,
+			'pass' => $password);
 	$user=user_authenticate($params);
 	if (!is_object($user))
 		return "Invalid username/password";
-	$filename=$req['filename'];
-	$sdp=$req['sdp']; # optional
-	$tag=$req['tag']; # optional
-	$url=$req['url'];
-	$uid=$user->uid;
-	$res=_file_mirror_run_upq("download url:$url sdp:$sdp filename:$filename uid:$uid");
-
-	return $res;
+	//FIXME: implement me
+	return 0;
 }
 
+function _file_mirror_sync($username, $password, $req){
+	$params = array( 'name' => $username,
+			'pass' => $password);
+	$user=user_authenticate($params);
+	if (!is_object($user))
+		return "Invalid username/password";
+
+	//FIXME: implement me
+	//$nid=_springdata_add_node
+	//insert into file_mirror_nodes or delete
+	if(!is_array($req))
+		return "invalid request, excepted an array";
+	$res=array();
+	$i=0;
+	foreach($req as $r) {
+		if (!array_key_exists("command", $r))
+			return "Key command doesn't exist";
+		if (!array_key_exists("fid", $r))
+			return "Key fid doesn't exist";
+		$res[$i]['fid']=$r['fid'];
+		if ($r['command']=="delete"){
+			//delete
+			$res[$i]['result']="deleted";
+		}else if ($r['command']=="update"){
+			//$node=_springdata_add_node();
+			$node="implement me";
+			$res[$i]['result']="updated";
+			$res[$i]['url']="http://springfiles.com/node/$node";
+		}else{
+			$res[]['result']="Invalid command";
+		}
+		//TODO: update/set last sid here
+		$i++;
+	}
+	return $res;
+}

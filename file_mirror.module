@@ -192,32 +192,30 @@ function file_mirror_get_fid_defaultMirror($fid){
 * Implementation of hook_xmlrpc
 */
 function file_mirror_xmlrpc(){
-	$methods[] = array(
+	
+	$methods[] = array( //deprecated method ( see https://github.com/springfiles/upq )
 			'springfiles.search', // xml-rpc method name
-			'file_mirror_xmlsearch', //function in module
+			'_file_mirror_xmlsearch', //function in module
 			array("string","struct"), //function signature //FIXME remove "string" (drupal bug?)
 			t('Handling a search request'), //help string
 		);
 	$methods[] = array(
-			'springfiles.upload',
-			'file_mirror_uploadfile',
-			array("string", "struct"), //function signature //FIXME remove "string" (drupal bug?)
-			t('Handling a upload request'),
-		);
+			'springfiles.getlastsyncid',
+			'_file_mirror_getlastsyncid',
+			array("string", "string", "string"), //username, password
+			t('returns the highest sync id, takes username + password as argument'),
+	);
 	$methods[] = array(
-			'springfiles.fileinfo',
-			'file_mirror_fileinfo',
-			array("string", "struct"),
-			t('Returning info about a specific file'),
-		);
-	$methods[] = array(
-			'springfiles.createnode',
-			'file_mirror_createnode',
-			array("string", "struct"),
-			t('Creates a node'),
+			'springfiles.sync',
+			'_file_mirror_sync',
+			array("string", "string", "string", "struct"),
+			t("handles update/delete calls from upq"),
 		);
 	return $methods;
 }
+
+
+
 
 /**
 * Menu callback; loads a file mirror object
