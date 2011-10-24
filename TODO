@@ -1,9 +1,0 @@
-
-#export script
-
- * remove hardcoded paths in sf-exporter.py
- * extract /bitmaps/loadpictures/<md5sum>.png + add to .xml & import at node creation
-
-#xml-rpc
-
- * add more xml-rpc functions to get more data (link to minimap for example)

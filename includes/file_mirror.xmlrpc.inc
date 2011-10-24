@@ -1,8 +1,7 @@
 <?php
 
 function _file_mirror_getlink($fid){
-	$res=db_query("SELECT nid FROM {content_field_file} as c WHERE field_file_fid=%d
-", array($fid));
+	$res=db_query("SELECT nid FROM {content_field_file} as c WHERE field_file_fid=%d", array($fid));
 	$nid=db_result($res);
 	if ($nid<=0)
 		return "";
@@ -18,7 +17,7 @@ function _file_mirror_getlink($fid){
 */
 
 function _file_mirror_xmlsearch($req){
-	return "Moved to http://upq.springfiles.com/xmlrpc.php";
+	return "Moved to http://api.springfiles.com/xmlrpc.php";
 }
 
 /*
@@ -152,7 +151,8 @@ function _file_mirror_sync($username, $password, $req){
 			//$node=_springdata_add_node();
 			$node="implement me";
 			$res[$i]['result']="updated";
-			$res[$i]['url']="http://springfiles.com/node/$node";
+			//$res[$i]['url']=_file_mirror_getlink($node);
+			$res[$i]['url']="http://example.com/implement me";
 		}else{
 			$res[]['result']="Invalid command";
 		}

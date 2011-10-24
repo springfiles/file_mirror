@@ -2,58 +2,21 @@
 
 function file_mirror_schema() {
     $schema = array();
-    $schema['file_mirror'] = array(
+     $schema['file_mirror_files'] = array(
         'fields' => array(
-            'fmid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
-            'title' => array('type' => 'text','size' => 'small'),
-            'description' => array('type' => 'text','size' => 'normal'),
-            'country' => array('type' => 'text','size' => 'small'),
-            'ftp_url' => array('type' => 'text','size' => 'small'),
-            'ftp_user' => array('type' => 'text','size' => 'small'),
-            'ftp_pass' => array('type' => 'text','size' => 'small'),
-            'ftp_dir' => array('type' => 'text','size' => 'small'),
-            'ftp_passive' => array('type' => 'int','size' => 'tiny'),
-            'ftp_port' => array('type' => 'int','size' => 'tiny'),
-            'url_prefix' => array('type' => 'text','size' => 'small'),
-            'url_deamon' => array('type' => 'text','size' => 'small'),
-            'uid' => array('type' => 'int','size' => 'tiny'),
-            'mirror_size' => array('type' => 'int','size' => 'normal'),
-            'fill' => array('type' => 'int','size' => 'big'),
-            'bandwidth_limit' => array('type' => 'int','size' => 'normal'),
-            'active' => array('type' => 'int','size' => 'tiny'),
-            'flat' => array('type' => 'int','size' => 'tiny'),
-            'dynamic' => array('type' => 'int','size' => 'tiny'),
-            'mbw' => array('type' => 'int','size' => 'big'),
-            'mbw_month' => array('type' => 'int','size' => 'tiny'),
-            'tbw' => array('type' => 'int','size' => 'big'),
-            'created' => array('type' => 'datetime'),
-            'changed' => array('type' => 'datetime'),
-            'lastupload' => array('type' => 'datetime'),
+            'sid' => array('type' => 'int',
+				'description' => 'sync sid of the remote file',),
+            'nid' => array('type' => 'int',
+				'description' => 'node id',),
+            'size' => array('type' => 'int',),
+            'md5' => array('type' => 'text',
+				'size' => 'small'),
+            'filename' => array('type' => 'text',
+				'size' => 'small'),
+            'timestamp' => array('type' => 'datetime'),
         ),
-        'primary key' => array('fmid'),
-        'unique keys' => array('fmid' => array('fmid')),
-        'foreign keys' => array(
-            'mirror_author' => array(
-                'table' => 'users',
-                'columns' => array('uid' => 'uid'),
-                ),
-        ),
-    );
-    $schema['file_mirror_files'] = array(
-        'fields' => array(
-            'fmfid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
-            'fmid' => array('type' => 'int','size' => 'tiny'),
-            'fid' => array('type' => 'int','size' => 'normal'),
-            'path' => array('type' => 'text','size' => 'small'),
-            'size' => array('type' => 'int','size' => 'normal'),
-            'md5' => array('type' => 'text', 'size' => 'small'),
-            'md5check' => array('type' => 'datetime'),
-            'active' => array('type' => 'int','size' => 'tiny'),
-            'status' => array('type' => 'int','size' => 'tiny'),
-            'changed' => array('type' => 'datetime'),
-        ),
-        'primary key' => array('fmfid'),
-        'unique keys' => array('fmfid' => array('fmfid')),
+        'primary key' => array('sid'),
+        'unique keys' => array('sid' => array('sid')),
         'foreign keys' => array(
             'file_mirror_id' => array(
                 'table' => 'file_mirror',
@@ -65,71 +28,18 @@ function file_mirror_schema() {
                 ),
         ),
     );
-    $schema['file_mirror_files2'] = array(
+   $schema['file_mirror_urls'] = array(
         'fields' => array(
-            'fmfid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
-            'fmid' => array('type' => 'int','size' => 'tiny'),
-            'fid' => array('type' => 'int','size' => 'normal'),
-            'path' => array('type' => 'text','size' => 'small'),
-            'changed' => array('type' => 'datetime'),
-        ),
-        'primary key' => array('fmfid'),
-        'unique keys' => array('fmfid' => array('fmfid')),
-        'foreign keys' => array(
-            'file_mirror_id' => array(
-                'table' => 'file_mirror',
-                'columns' => array('fmid' => 'fmid'),
-                ),
-            'file_id' => array(
-                'table' => 'files',
-                'columns' => array('fid' => 'fid'),
-                ),
-        ),
-    );
-    $schema['file_mirror_paths'] = array(
-        'fields' => array(
-            'fmpid' => array('type' => 'serial','unsigned' => TRUE,'not null' => TRUE),
-            'fmid' => array('type' => 'int','size' => 'tiny'),
-            'path' => array('type' => 'text','size' => 'small','not null' => TRUE),
-        ),
-        'primary key' => array('fmpid'),
-        'unique keys' => array('fmpid' => array('fmpid')),
-        'foreign keys' => array(
-            'file_mirror_id' => array(
-                'table' => 'file_mirror',
-                'columns' => array('fmid' => 'fmid'),
-                ),
+            'sid' => array('type' => 'int',),
+            'url' => array('type' => 'text',
+				'size' => 'small'),
         ),
     );
 
-	//schema for springdata
-  $schema['springdata_archives'] = array(
+  $schema['file_mirror_depends'] = array(
     'description' => t('TODO'),
     'fields' => array(
-      'fid' => array(
-        'description' => 'Primary Key: File ID',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'springname' => array(
-        'description' => t('The nid of the node to which the downloaded file was attached when it was downloaded.'),
-        'type' => 'varchar',
-'length' => 256,
-        'not null' => TRUE,
-'default' => '',
-      ),
-    ),
-    'primary key' => array('fid'),
-    'unique keys' => array(
-'springname'=>array('springname'),
-),
-  );
-
-  $schema['springdata_depends'] = array(
-    'description' => t('TODO'),
-    'fields' => array(
-      'fid' => array(
+      'sid' => array(
         'description' => 'Primary Key: File ID',
         'type' => 'int',
         'unsigned' => TRUE,
@@ -142,13 +52,13 @@ function file_mirror_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('fid', 'depends'),
+    'primary key' => array('sid', 'depends'),
   );
 
-  $schema['springdata_startpos'] = array(
+  $schema['file_mirror_startpos'] = array(
     'description' => t('TODO'),
     'fields' => array(
-      'fid' => array(
+      'sid' => array(
         'description' => 'Primary Key: File ID',
         'type' => 'int',
         'unsigned' => TRUE,
@@ -173,7 +83,7 @@ function file_mirror_schema() {
         'not null' => TRUE,
       ),
     ),
-    'primary key' => array('fid', 'id'),
+    'primary key' => array('sid', 'id'),
   );
 
     return $schema;
