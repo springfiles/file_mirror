@@ -1,91 +1,19 @@
 <?php
 
 function file_mirror_schema() {
-    $schema = array();
-     $schema['file_mirror_files'] = array(
-        'fields' => array(
-            'sid' => array('type' => 'int',
+	$schema = array();
+	$schema['file_mirror_files'] = array(
+		'fields' => array(
+			'sid' => array('type' => 'int',
 				'description' => 'sync sid of the remote file',),
-            'nid' => array('type' => 'int',
-				'description' => 'node id',),
-            'size' => array('type' => 'int',),
-            'md5' => array('type' => 'text',
-				'size' => 'small'),
-            'filename' => array('type' => 'text',
-				'size' => 'small'),
-            'timestamp' => array('type' => 'datetime'),
-        ),
-        'primary key' => array('sid'),
-        'unique keys' => array('sid' => array('sid')),
-        'foreign keys' => array(
-            'file_mirror_id' => array(
-                'table' => 'file_mirror',
-                'columns' => array('fmid' => 'fmid'),
-                ),
-            'file_id' => array(
-                'table' => 'files',
-                'columns' => array('fid' => 'fid'),
-                ),
-        ),
-    );
-   $schema['file_mirror_urls'] = array(
-        'fields' => array(
-            'sid' => array('type' => 'int',),
-            'url' => array('type' => 'text',
-				'size' => 'small'),
-        ),
-    );
-
-  $schema['file_mirror_depends'] = array(
-    'description' => t('TODO'),
-    'fields' => array(
-      'sid' => array(
-        'description' => 'Primary Key: File ID',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'depends' => array(
-        'description' => 'Depends',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array('sid', 'depends'),
-  );
-
-  $schema['file_mirror_startpos'] = array(
-    'description' => t('TODO'),
-    'fields' => array(
-      'sid' => array(
-        'description' => 'Primary Key: File ID',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'id' => array(
-        'description' => '# of Startpos',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'x' => array(
-        'description' => 'x of Startpos',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'z' => array(
-        'description' => 'z of Startpos',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array('sid', 'id'),
-  );
-
+			'nid' => array('type' => 'int',
+				'description' => 'node id',
+				'not null' => true),
+			'metadata' => array('type' => 'text',),
+		),
+		'primary key' => array('sid'),
+		'unique keys' => array('nid' => array('nid'),),
+		);
     return $schema;
 }
 
@@ -96,4 +24,3 @@ function file_mirror_install() {
 function file_mirror_uninstall() {
     drupal_uninstall_schema('file_mirror');
 }
-

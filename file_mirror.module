@@ -104,22 +104,15 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
 TODO: should change this later into the preferred mirror to the client
 */
 function file_mirror_get_fid_mirrors($nid) {
-	$q = db_query("SELECT * FROM {file_mirror_files} m LEFT JOIN {file_mirror_urls} u ON m.sid = u.sid WHERE m.nid = %d ORDER BY RAND()", array($nid));
-	while ($records = db_fetch_object($q)){
-		$array[] = $records;
-	}
-/*
-	$records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'NL' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
-	$records->path = str_replace(file_directory_path(), '', $records->path);
-	$records->path = 'downloadmain/'.$fid;
-	$array[] = $records;
-*/
-	shuffle($array); //randomize result
-	return $array;
+	$q = db_query("SELECT metadata FROM {file_mirror_files} WHERE nid = %d", array($nid));
+	$records = json_decode(db_fetch_object($q));
+	$mirrors=$records['mirror'];
+	shuffle($mirrors); //randomize result
+	return $mirrors;
 }
 
-function file_mirror_get_fid_defaultMirror($fid){
-	$arr=file_mirror_get_fid_mirrors($fid);
+function file_mirror_get_fid_defaultMirror($nid){
+	$arr=file_mirror_get_fid_mirrors($nid);
 	return $arr[0];
 }
 
@@ -142,7 +135,7 @@ function file_mirror_xmlrpc(){
 	$methods[] = array(
 			'springfiles.sync',
 			'_file_mirror_sync',
-			array("string", "string", "string", "struct"),
+			array("string", "string", "string", "struct"), //username, password, metadata
 			t("handles update/delete calls from upq"),
 		);
 	return $methods;
