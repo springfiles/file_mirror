@@ -1,13 +1,14 @@
 <?php
 
 function _file_mirror_getlink($nid){
+	global $base_url;
 	if ($nid<=0)
 		return "";
 	$res=db_query("SELECT dst FROM {url_alias} WHERE src='%s'",array("node/$nid"));
 	$url=db_result($res);
 	if (strlen($url)>0)
-		return "http://springfiles.com/$url";
-	return "http://springfiles.com/node/$nid";
+		return "$base_url/$url";
+	return "$base_url/node/$nid";
 }
 
 /**
