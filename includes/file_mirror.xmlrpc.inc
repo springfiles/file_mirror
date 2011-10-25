@@ -42,7 +42,13 @@ function _springdata_add_node($sid, $nodeid, $user, $metadata){
 	}
 	if($nodeid>0){
 		$node=node_load($nodeid);
-		watchdog("file_mirror", "loaded old node ".$node->nid);
+		if ($node===FALSE){
+			watchdog("file_mirror", "loading node failed, creating new one");
+			$node = new stdClass();
+		}else {
+			watchdog("file_mirror", "loaded old node ".$node->nid);
+			$node->nid=$nodeid;
+		}
 	}else{
 		$node = new stdClass();
 	}
@@ -65,7 +71,7 @@ function _springdata_add_node($sid, $nodeid, $user, $metadata){
 //		$node->field_image[0]['value']=$xml->Height;
 	}
 	node_save($node);
-	watchdog("file_mirror", "created ".$node->nid.print_r($node, true));
+	watchdog("file_mirror", $node->nid.": ".print_r($node, true));
 	return $node->nid;
 }
 
@@ -116,8 +122,8 @@ function _file_mirror_sync($username, $password, $req){
 			$newnodeid=_springdata_add_node($r['fid'], $nodeid,$user, $r['metadata']);
 			$res[$i]['result']="updated";
 			if ($nodeid>0){ //node already exists
-				db_query("UPDATE {file_mirror_files} SET metadata='%s' WHERE sid=%d", array(json_encode($r['metadata']), $r['fid']));
-			}else if ($newnodeid>0){
+				db_query("UPDATE {file_mirror_files} SET metadata='%s', nid=%d WHERE sid=%d", array(json_encode($r['metadata']), $newnodeid, $r['fid']));
+			}else if ($newnodeid>0){ //new node created / old one updated
 				db_query("INSERT INTO {file_mirror_files} (sid, nid, metadata) VALUES (%d, %d,'%s')", array($r['fid'],$newnodeid, json_encode($r['metadata'])));
 				$nodeid=$newnodeid;
 			} else {
