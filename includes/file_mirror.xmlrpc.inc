@@ -147,5 +147,7 @@ function _file_mirror_sync($username, $password, $req){
 		//TODO: update/set last sid here
 		$i++;
 	}
+	//logout (clean sessions table)
+	sess_destroy_uid($user->uid);
 	return $res;
 }
