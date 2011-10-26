@@ -31,27 +31,27 @@ function _springdata_add_node($nodeid, $user, $metadata){
 	else if ($cat=="Map")
 		$cat_sel="type='category' and title='Spring Maps'";
 	else{
-		watchdog("file_mirror","category not detected $cat");
+		watchdog("file_mirror","category not detected %cat",array('%cat'=>$cat), WATCHDOG_ERROR);
 		return -1;
 	}
 	$res=db_query("SELECT nid FROM {node} WHERE ".$cat_sel);
 	$cat=intval(db_result($res));
 	if ($cat<=0){
-		watchdog("file_mirror","category $cat not found in db");
+		watchdog("file_mirror","category %cat not found in db",array('%cat'=>$cat), WATCHDOG_ERROR);
 //		return -1;  //FIXME: re-enable
 	}
 	if($nodeid>0){
 		$node=node_load($nodeid);
 		if ($node===FALSE){
-			watchdog("file_mirror", "loading node failed, creating new one");
+			watchdog("file_mirror", "loading node failed, creating new one", WATCHDOG_WARNING);
 			$node = new stdClass();
 		}else {
-			watchdog("file_mirror", "loaded old node ".$node->nid);
+			watchdog("file_mirror", "loaded old node %nid", array('%nid'=>$node->nid), WATCHDOG_DEBUG);
 			$node->nid=$nodeid;
 		}
 	}else{
 		$node = new stdClass();
-		watchdog("file_mirror","Creating new node");
+		watchdog("file_mirror","Creating new node",array(), WATCHDOG_DEBUG);
 	}
 	$node->uid = $user->uid;
 	$node->name = $metadata['name']." ".$metadata['version'];
@@ -72,7 +72,7 @@ function _springdata_add_node($nodeid, $user, $metadata){
 //		$node->field_image[0]['value']=$xml->Height;
 	}
 	node_save($node);
-	watchdog("file_mirror", $node->nid.": ".print_r($node, true));
+	watchdog("file_mirror", "%nid %data", array('%nid'=>$node->nid, '%data'=>print_r($node, true)), WATCHDOG_DEBUG);
 	return $node->nid;
 }
 
@@ -92,26 +92,26 @@ function _file_mirror_sync($username, $password, $req){
 	$user=user_authenticate($params);
 	if (!is_object($user)){
 		$err="Invalid username/password";
-		watchdog("file_mirror", $err);
+		watchdog("file_mirror", $err,array(), WATCHDOG_ERROR);
 		return $err;
 	}
 	if(!is_array($req)){
 		$err="invalid request, excepted an array";
-		watchdog("file_mirror", $err);
+		watchdog("file_mirror", $err,array(), WATCHDOG_ERROR);
 		return $err;
 	}
-	watchdog("file_mirror", "got ".sizeof($req)." requests");
+	watchdog("file_mirror", "got %req requests",array('%req'=>sizeof($req)), WATCHDOG_DEBUG);
 	$res=array();
 	$i=0;
 	foreach($req as $r) {
 		if (!array_key_exists("command", $r)){
 			$err="Key command doesn't exist";
-			watchdog("file_mirror", $err);
+			watchdog("file_mirror", $err,array(), WATCHDOG_ERROR);
 			return $err;
 		}
 		if (!array_key_exists("fid", $r)){
 			$err="Key fid doesn't exist";
-			watchdog("file_mirror", $err);
+			watchdog("file_mirror", $err, array(), WATCHDOG_ERROR);
 			return $err;
 		}
 		$res[$i]['fid']=$r['fid']; //fid is the remote fid, not the fid locally!!!! it is used as "sid" here
@@ -128,7 +128,7 @@ function _file_mirror_sync($username, $password, $req){
 		}else if ($r['command']=="update"){
 			$fileres=db_query("SELECT nid FROM {file_mirror_files} WHERE sid=%d", array($r['fid']));
 			$nodeid=intval(db_result($fileres));
-			watchdog("file_mirror", "nid: $nodeid sid: ".$r['fid']);
+			watchdog("file_mirror", "nid: %nid  sid: %sid", array('%nid'=>$nodeid, '%sid'=>$r['fid']), WATCHDOG_DEBUG);
 			$newnodeid=_springdata_add_node($nodeid,$user, $r['metadata']);
 			$res[$i]['result']="updated";
 			if ($nodeid>0){ //node already exists
@@ -137,11 +137,11 @@ function _file_mirror_sync($username, $password, $req){
 				db_query("INSERT INTO {file_mirror_files} (sid, nid, metadata) VALUES (%d, %d,'%s')", array($r['fid'],$newnodeid, json_encode($r['metadata'])));
 				$nodeid=$newnodeid;
 			} else {
-				watchdog("file_mirror", "error creating node");
+				watchdog("file_mirror", "error creating node",array(), WATCHDOG_ERROR);
 			}
 			$res[$i]['url']=_file_mirror_getlink($nodeid);
 		}else{
-			watchdog("file_mirror", "invalid command ".$r['command']);
+			watchdog("file_mirror", "invalid command %command", array('%command'=>$r['command']), WATCHDOG_ERROR);
 			$res[]['result']="Invalid command";
 		}
 		//TODO: update/set last sid here
