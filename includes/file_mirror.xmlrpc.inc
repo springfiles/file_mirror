@@ -24,7 +24,7 @@ function _file_mirror_xmlsearch($req){
 	@param sid sync id of the file
 	@return nid of the created node, <0 on error
 */
-function _springdata_add_node($sid, $nodeid, $user, $metadata){
+function _springdata_add_node($nodeid, $user, $metadata){
 	$cat = $metadata['category'];
 	if($cat=="Game")
 		$cat_sel="type='category' and title='Games'";
@@ -51,6 +51,7 @@ function _springdata_add_node($sid, $nodeid, $user, $metadata){
 		}
 	}else{
 		$node = new stdClass();
+		watchdog("file_mirror","Creating new node");
 	}
 	$node->uid = $user->uid;
 	$node->name = $metadata['name']." ".$metadata['version'];
@@ -89,21 +90,30 @@ function _file_mirror_sync($username, $password, $req){
 	$params = array( 'name' => $username,
 			'pass' => $password);
 	$user=user_authenticate($params);
-	if (!is_object($user))
-		return "Invalid username/password";
-
-	//FIXME: implement me
-	//$nid=_springdata_add_node
-	//insert into file_mirror_nodes or delete
-	if(!is_array($req))
-		return "invalid request, excepted an array";
+	if (!is_object($user)){
+		$err="Invalid username/password";
+		watchdog("file_mirror", $err);
+		return $err;
+	}
+	if(!is_array($req)){
+		$err="invalid request, excepted an array";
+		watchdog("file_mirror", $err);
+		return $err;
+	}
+	watchdog("file_mirror", "got ".sizeof($req)." requests");
 	$res=array();
 	$i=0;
 	foreach($req as $r) {
-		if (!array_key_exists("command", $r))
-			return "Key command doesn't exist";
-		if (!array_key_exists("fid", $r))
-			return "Key fid doesn't exist";
+		if (!array_key_exists("command", $r)){
+			$err="Key command doesn't exist";
+			watchdog("file_mirror", $err);
+			return $err;
+		}
+		if (!array_key_exists("fid", $r)){
+			$err="Key fid doesn't exist";
+			watchdog("file_mirror", $err);
+			return $err;
+		}
 		$res[$i]['fid']=$r['fid']; //fid is the remote fid, not the fid locally!!!! it is used as "sid" here
 		if ($r['command']=="delete"){
 			$fileres=db_query("SELECT nid FROM {file_mirror_files} WHERE sid=%d", array($r['fid']));
@@ -118,8 +128,8 @@ function _file_mirror_sync($username, $password, $req){
 		}else if ($r['command']=="update"){
 			$fileres=db_query("SELECT nid FROM {file_mirror_files} WHERE sid=%d", array($r['fid']));
 			$nodeid=intval(db_result($fileres));
-			watchdog("file_mirror", "old node id: $nodeid");
-			$newnodeid=_springdata_add_node($r['fid'], $nodeid,$user, $r['metadata']);
+			watchdog("file_mirror", "nid: $nodeid sid: ".$r['fid']);
+			$newnodeid=_springdata_add_node($nodeid,$user, $r['metadata']);
 			$res[$i]['result']="updated";
 			if ($nodeid>0){ //node already exists
 				db_query("UPDATE {file_mirror_files} SET metadata='%s', nid=%d WHERE sid=%d", array(json_encode($r['metadata']), $newnodeid, $r['fid']));
@@ -131,6 +141,7 @@ function _file_mirror_sync($username, $password, $req){
 			}
 			$res[$i]['url']=_file_mirror_getlink($nodeid);
 		}else{
+			watchdog("file_mirror", "invalid command ".$r['command']);
 			$res[]['result']="Invalid command";
 		}
 		//TODO: update/set last sid here
