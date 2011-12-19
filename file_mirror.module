@@ -32,7 +32,8 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
 */
 function _file_mirror_notify_upq($fid){
 	$timeout=5;
-	$job="new_file fid:$fid";
+	$file=field_file_load($fid);
+	$job="download url:".file_create_url($file['filepath']);
 	//FIXME: this should be an xml-rpc call with the http-url?
 	$sock = @stream_socket_client('unix:///tmp/.upq-incoming.sock', $errno, $errstr, $timeout);
 	if($sock===FALSE){
