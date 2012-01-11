@@ -82,8 +82,7 @@ function _file_mirror_getlastsyncid($username, $password){
 	$user=user_authenticate($params);
 	if (!is_object($user))
 		return "Invalid username/password";
-	//FIXME: implement me
-	return 0;
+	return intval(variable_get("file_mirror_lastsyncid"));
 }
 
 function _file_mirror_sync($username, $password, $req){
@@ -144,7 +143,7 @@ function _file_mirror_sync($username, $password, $req){
 			watchdog("file_mirror", "invalid command %command", array('%command'=>$r['command']), WATCHDOG_ERROR);
 			$res[]['result']="Invalid command";
 		}
-		//TODO: update/set last sid here
+		variable_set("file_mirror_lastsyncid", $r['sid'] );
 		$i++;
 	}
 	//logout (clean sessions table)
