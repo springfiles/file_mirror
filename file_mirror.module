@@ -2,7 +2,7 @@
 // Download files from remote ftp and create nodes for every file.
 // Load module libraries
 require_once ( dirname(__FILE__) . '/includes/file_mirror.xmlrpc.inc');
-
+define('MIRROR_PATH', 'sites/default/files/downloads/spring/'); //path with files that will be mirrored
 
 function file_mirror_menu() {
   $items = array();
@@ -30,22 +30,36 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
 /**
 * notify cron job about changes
 */
-function _file_mirror_notify_upq($fid){
-	$timeout=5;
-	$file=field_file_load($fid);
-	$job="download url:".file_create_url($file['filepath']);
-	//FIXME: this should be an xml-rpc call with the http-url?
-	$sock = @stream_socket_client('unix:///tmp/.upq-incoming.sock', $errno, $errstr, $timeout);
-	if($sock===FALSE){
-		watchdog("filemirror", "error connecting to upq socket $errstr $fid");
-		return;
+
+function _file_mirror_notify_upq($url){
+	$request = xmlrpc_encode_request("springfiles.upload",
+	array(
+		"url" => $url,
+	));
+	$context = stream_context_create(
+	array(
+		'http'=>
+			array(
+				'method' => 'POST',
+				'header' => "Content-Type: text/xml\r\n".
+				"User-Agent: drupal php bot\r\n",
+				'escaping' => 'non-ascii',
+				'content' => $request,
+			)
+		)
+	);
+	$file = file_get_contents('http://api.springfiles.com/xmlrpc.php', false, $context);
+	$response = xmlrpc_decode($file);
+	if ($response && is_array($response)) {
+		if (xmlrpc_is_fault($response)) {
+			$msg="xmlrpc: ".$response[faultString]." (".$response[faultCode].")";
+		} else {
+		$msg=print_r($response, true);
+		}
+	} else {
+		$msg="Invalid response received: ".$file;
 	}
-	stream_set_timeout($sock, $timeout);
-	fwrite($sock, "$job\n");
-	$res=fgets($sock);
-	fclose($sock);
-	watchdog("filemirror", "result from upq: $res");
-	return $res;
+	watchdog('file_mirror', $msg);
 }
 
 /**
@@ -64,8 +78,8 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
           foreach ($node->files as $key => $file_attachment)
             {
               //attach mirror data to the file attachment array
-              $node->files[$key]->mirrors = file_mirror_get_fid_mirrors($node->nid);
-              $node->files[$key]->default_mirror = file_mirror_get_fid_defaultMirror($node->nid);
+              $node->files[$key]->mirrors = file_mirror_get_fid_mirrors($file_attachment->fid);
+              $node->files[$key]->default_mirror = file_mirror_get_fid_defaultMirror($file_attachment->fid);
             }
       }
       //get all filefield files
@@ -124,19 +138,19 @@ function file_mirror_xmlrpc(){
 	$methods[] = array( //deprecated method ( see https://github.com/springfiles/upq )
 			'springfiles.search', // xml-rpc method name
 			'_file_mirror_xmlsearch', //function in module
-			array("string","struct"), //function signature //FIXME remove "string" (drupal bug?)
+			array("string","struct"), //return, function signature
 			t('Handling a search request'), //help string
 		);
 	$methods[] = array(
 			'springfiles.getlastsyncid',
 			'_file_mirror_getlastsyncid',
-			array("string", "string", "string"), //username, password
+			array('string', 'string', 'string'), //return int, username, password
 			t('returns the highest sync id, takes username + password as argument'),
 	);
 	$methods[] = array(
 			'springfiles.sync',
 			'_file_mirror_sync',
-			array("string", "string", "string", "struct"), //username, password, metadata
+			array("string", "string", "string", "array"), //return string, username, password, metadata
 			t("handles update/delete calls from upq"),
 		);
 	return $methods;
