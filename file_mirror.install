@@ -2,7 +2,7 @@
 
 function file_mirror_schema() {
 	$schema = array();
-	$schema['file_mirror_files'] = array(
+	$schema['file_mirror_data'] = array(
 		'fields' => array(
 			'sid' => array('type' => 'int',
 				'description' => 'sync sid of the remote file',),

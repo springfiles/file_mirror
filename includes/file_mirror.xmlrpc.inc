@@ -25,6 +25,8 @@ function _file_mirror_xmlsearch($req){
 	@return nid of the created node, <0 on error
 */
 function _springdata_add_node($nodeid, $user, $metadata){
+	$res=db_query("SELECT MAX(nid) FROM {file_mirror_data}");
+	return db_result($res)+1; //tmp disabled
 	$cat = $metadata['category'];
 	if($cat=="Game")
 		$cat_sel="type='category' and title='Games'";
@@ -115,25 +117,25 @@ function _file_mirror_sync($username, $password, $req){
 		}
 		$res[$i]['fid']=$r['fid']; //fid is the remote fid, not the fid locally!!!! it is used as "sid" here
 		if ($r['command']=="delete"){
-			$fileres=db_query("SELECT nid FROM {file_mirror_files} WHERE sid=%d", array($r['fid']));
+			$fileres=db_query("SELECT nid FROM {file_mirror_data} WHERE sid=%d", array($r['fid']));
 			$nodeid=intval(db_result($fileres));
 			if ($nodeid>0){
-				node_delete($nodeid);
-				db_query("DELETE FROM {file_mirror_files} WHERE sid=%d", array($r['fid']));
+			//	node_delete($nodeid);
+				db_query("DELETE FROM {file_mirror_data} WHERE sid=%d", array($r['fid']));
 				$res[$i]['result']="deleted $nodeid";
 			}else{
 				$res[$i]['result']="nodeid $nodeid not found for sid ".$r['fid'];
 			}
 		}else if ($r['command']=="update"){
-			$fileres=db_query("SELECT nid FROM {file_mirror_files} WHERE sid=%d", array($r['fid']));
+			$fileres=db_query("SELECT nid FROM {file_mirror_data} WHERE sid=%d", array($r['fid']));
 			$nodeid=intval(db_result($fileres));
 			watchdog("file_mirror", "nid: %nid  sid: %sid", array('%nid'=>$nodeid, '%sid'=>$r['fid']), WATCHDOG_DEBUG);
 			$newnodeid=_springdata_add_node($nodeid,$user, $r['metadata']);
 			$res[$i]['result']="updated";
 			if ($nodeid>0){ //node already exists
-				db_query("UPDATE {file_mirror_files} SET metadata='%s', nid=%d WHERE sid=%d", array(json_encode($r['metadata']), $newnodeid, $r['fid']));
+				db_query("UPDATE {file_mirror_data} SET metadata='%s', nid=%d WHERE sid=%d", array(json_encode($r['metadata']), $newnodeid, $r['fid']));
 			}else if ($newnodeid>0){ //new node created / old one updated
-				db_query("INSERT INTO {file_mirror_files} (sid, nid, metadata) VALUES (%d, %d,'%s')", array($r['fid'],$newnodeid, json_encode($r['metadata'])));
+				db_query("INSERT INTO {file_mirror_data} (sid, nid, metadata) VALUES (%d, %d,'%s')", array($r['fid'],$newnodeid, json_encode($r['metadata'])));
 				$nodeid=$newnodeid;
 			} else {
 				watchdog("file_mirror", "error creating node",array(), WATCHDOG_ERROR);
@@ -148,5 +150,6 @@ function _file_mirror_sync($username, $password, $req){
 	}
 	//logout (clean sessions table)
 	sess_destroy_uid($user->uid);
-	return $res;
+//	return $res;
+	return "http://"; //FIXME
 }
