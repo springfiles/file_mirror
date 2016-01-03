@@ -19,7 +19,7 @@ function file_mirror_menu() {
 function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
     case 'list':
-      $blocks[0]['info'] = t('Philosophical Quotes');
+      $blocks[0]['info'] = t('Mirror block list');
       return $blocks;
     case 'view':
       $blocks['subject'] = t('Download locations');
@@ -28,7 +28,7 @@ function file_mirror_block($op = 'list', $delta = 0, $edit = array()) {
   }
 }
 /**
-* notify cron job about changes
+* notify upq service about changes
 */
 
 function _file_mirror_notify_upq($url){
@@ -63,8 +63,8 @@ function _file_mirror_notify_upq($url){
 }
 
 /**
-*implementation of hook_nodeapi
-*adds filemirror data to $node with attachment files or filefields
+* implementation of hook_nodeapi
+* adds filemirror data to node object with attachment files or filefields
 */
 function file_mirror_nodeapi(&$node, $op, $teaser) {
   $result = array();
@@ -182,6 +182,7 @@ function file_mirror_xmlrpc(){
 	return $methods;
 }
 
+//Drupal 6 cron issues workaround
 function file_mirror_fix_cron() {
 	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_semaphore'");
 	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_last'");
