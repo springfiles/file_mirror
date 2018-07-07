@@ -49,6 +49,9 @@ function _file_mirror_notify_upq($url){
 		)
 	);
 	$file = file_get_contents('http://api.springfiles.com/xmlrpc.php', false, $context);
+	if(strpos($file, 'ACK') !== false) {
+		return;
+	}
 	$response = xmlrpc_decode($file);
 	if ($response && is_array($response)) {
 		if (xmlrpc_is_fault($response)) {
@@ -57,7 +60,7 @@ function _file_mirror_notify_upq($url){
 		$msg=print_r($response, true);
 		}
 	} else {
-		$msg="Invalid response received: ".$file;
+		$msg="Invalid response received: '$file'";
 	}
 	watchdog('file_mirror', $msg);
 }
@@ -144,9 +147,11 @@ function file_mirror_get_fid_mirrors($fid) {
                $array[] = $records;
        }
        $records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'NL' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
-       $records->path = str_replace(file_directory_path(), '', $records->path);
-       $records->path = 'downloadmain/'.$fid;
-       $array[] = $records;
+	if (is_object($records)) {
+		$records->path = str_replace(file_directory_path(), '', $records->path);
+		$records->path = 'downloadmain/'.$fid;
+		$array[] = $records;
+	}
        shuffle($array);
        return $array;
  }
@@ -189,3 +194,38 @@ function file_mirror_fix_cron() {
 	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_threshold_semaphore'");
 	return "fixed";
 }
+
+function file_mirror_cron(){
+        $lastrun=intval(variable_get("file_mirror_lastrun", 0));
+	$now = time();
+
+	if (abs($now - $lastrun) < 7200) {
+	        watchdog('file_mirror', "Last run was " . $now);
+		return;
+	}
+
+	variable_set("file_mirror_lastrun", $now);
+        watchdog('file_mirror', "Trying to reupload files to upq... " . $lastrun);
+
+	$res = db_query("SELECT filepath FROM files f
+        JOIN content_field_file c ON c.field_file_fid = f.fid
+        JOIN node n ON n.nid = c.nid
+        JOIN filehash h ON h.fid = f.fid
+        WHERE f.fid NOT IN (
+                SELECT f.fid FROM files f
+                JOIN file_mirror_files fm ON fm.fid = f.fid
+        )
+        AND (
+                f.filepath LIKE '%%spring-maps%%'
+        )
+        GROUP BY h.md5");
+	$i = 0;
+	while ($row = db_fetch_array($res)) {
+		$path = $row['filepath'];
+	        $url = "http://springfiles.com/" . $path;
+	        _file_mirror_notify_upq($url);
+		$i++;
+	}
+        watchdog('file_mirror', "done with ". $i . " files");
+}
+
