@@ -117,29 +117,6 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
   }
 }
 
-/**
-@return a random filemirror, excluding master if mirrorcount > 2
-TODO: should change this later into the preferred mirror to the client
-*/
-
-//FIXME: remove this commented out function
-/*
-
-function file_mirror_get_fid_mirrors($fid) {
-	$q = db_query("SELECT metadata FROM {file_mirror_data} WHERE nid = %d", array($fid));
-	$records = json_decode(db_fetch_object($q));
-	$mirrors=$records['mirror'];
-	shuffle($mirrors); //randomize result
-	return $mirrors;
-}
-
-function file_mirror_get_fid_defaultMirror($fid){
-	$arr=file_mirror_get_fid_mirrors($fid);
-	return $arr[0];
-}
-
-*/
-//FIXME: and comment these two out (when prequesites are met)
 function file_mirror_get_fid_mirrors($fid) {
        $q = db_query("SELECT * FROM {file_mirror_files} m LEFT JOIN {file_mirror} f ON m.fmid = f.fmid WHERE m.active = 1 AND f.active = 1 AND m.fid = %d", array($fid));
        $array = array();
@@ -161,21 +138,26 @@ function file_mirror_get_fid_defaultMirror($fid){
 	return $arr[0];
 }
 
+function _file_mirror_getfiles($lastid)
+{
+
+	$dbres = db_query('select f.fid, f.filepath, h.md5, f.filesize, f.timestamp from files f left join filehash h on f.fid = h.fid where f.fid > %d and (f.filename like "%%.sdz" or f.filename like "%%.sd7") order by f.fid limit 0,1000', array($lastid));
+	$res = array("a" => "b");
+	while ($row = db_fetch_array($dbres)) {
+		$res[] = $row;
+	}
+	return $res;
+}
+
 
 /**
 * Implementation of hook_xmlrpc
 */
 function file_mirror_xmlrpc(){
-	$methods[] = array( //deprecated method ( see https://github.com/springfiles/upq )
-			'springfiles.search', // xml-rpc method name
-			'_file_mirror_xmlsearch', //function in module
-			array("string","struct"), //return, function signature
-			t('Handling a search request'), //help string
-		);
 	$methods[] = array(
-			'springfiles.getlastsyncid',
-			'_file_mirror_getlastsyncid',
-			array('string', 'string', 'string'), //return int, username, password
+			'springfiles.getfiles',
+			'_file_mirror_getfiles',
+			array("int", 'array'), //list of files
 			t('returns the highest sync id, takes username + password as argument'),
 	);
 	$methods[] = array(
