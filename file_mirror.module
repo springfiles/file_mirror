@@ -142,7 +142,7 @@ function _file_mirror_getfiles($lastid)
 {
 
 	$dbres = db_query('select f.fid, f.filepath, h.md5, f.filesize, f.timestamp from files f left join filehash h on f.fid = h.fid where f.fid > %d and (f.filename like "%%.sdz" or f.filename like "%%.sd7") order by f.fid limit 0,1000', array($lastid));
-	$res = array("a" => "b");
+	$res = array();
 	while ($row = db_fetch_array($dbres)) {
 		$res[] = $row;
 	}
