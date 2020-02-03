@@ -155,6 +155,12 @@ function _file_mirror_getfiles($lastid)
 */
 function file_mirror_xmlrpc(){
 	$methods[] = array(
+			'springfiles.getlastsyncid',
+			'_file_mirror_getlastsyncid',
+			array('string', 'string', 'string'), //return int, username, password
+	);
+
+	$methods[] = array(
 			'springfiles.getfiles',
 			'_file_mirror_getfiles',
 			array("int", 'array'), //list of files
