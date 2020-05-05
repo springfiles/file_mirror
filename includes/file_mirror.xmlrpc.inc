@@ -84,7 +84,7 @@ function _file_mirror_getlastsyncid($username, $password){
 	$user=user_authenticate($params);
 	if (!is_object($user))
 		return "Invalid username/password";
-	return intval(variable_get("file_mirror_lastsyncid"));
+	return intval(variable_get("file_mirror_lastsyncid", 0));
 }
 
 function _file_mirror_sync($username, $password, $req){
