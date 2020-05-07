@@ -118,16 +118,31 @@ function file_mirror_nodeapi(&$node, $op, $teaser) {
 }
 
 function file_mirror_get_fid_mirrors($fid) {
-       $q = db_query("SELECT * FROM {file_mirror_files} m LEFT JOIN {file_mirror} f ON m.fmid = f.fmid WHERE m.active = 1 AND f.active = 1 AND m.fid = %d", array($fid));
-       $array = array();
-       while ($records = db_fetch_object($q)){
-               $array[] = $records;
-       }
-       $records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'NL' as country, filepath as path FROM {files} WHERE fid = %d AND status = 1", array($fid)));
+       $records = db_fetch_object(db_query("SELECT 'springfiles.com' as title, 'NL' as country, filepath as path, md5 FROM {files} f LEFT JOIN {filehash} h ON f.fid=h.fid  WHERE f.fid = %d AND status = 1", array($fid)));
+	$array = array();
 	if (is_object($records)) {
 		$records->path = str_replace(file_directory_path(), '', $records->path);
 		$records->path = 'downloadmain/'.$fid;
 		$array[] = $records;
+	}
+	$content=file_get_contents("https://api.springfiles.com/json.php?md5=" . $records->md5);
+	$files =json_decode($content, true);
+
+	if (count($files) > 0) {
+	foreach($files[0]["mirrors"] as $url) {
+		$host = parse_url($url, PHP_URL_HOST);
+		$country = substr($url, strrpos($url, '.') + 1);
+		if ($country == "com") {
+			$country = "NL";
+		} else {
+			$country = "DE";
+		}
+		$array[] = (object) [
+			"title" => $host,
+			"country" => $country,
+			"path" => $url
+		];
+	}
 	}
        shuffle($array);
        return $array;
@@ -181,39 +196,5 @@ function file_mirror_fix_cron() {
 	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_last'");
 	$q = db_query("DELETE FROM `variable` WHERE name = 'cron_threshold_semaphore'");
 	return "fixed";
-}
-
-function file_mirror_cron(){
-        $lastrun=intval(variable_get("file_mirror_lastrun", 0));
-	$now = time();
-
-	if (abs($now - $lastrun) < 7200) {
-	        watchdog('file_mirror', "Last run was " . $now);
-		return;
-	}
-
-	variable_set("file_mirror_lastrun", $now);
-        watchdog('file_mirror', "Trying to reupload files to upq... " . $lastrun);
-
-	$res = db_query("SELECT filepath FROM files f
-        JOIN content_field_file c ON c.field_file_fid = f.fid
-        JOIN node n ON n.nid = c.nid
-        JOIN filehash h ON h.fid = f.fid
-        WHERE f.fid NOT IN (
-                SELECT f.fid FROM files f
-                JOIN file_mirror_files fm ON fm.fid = f.fid
-        )
-        AND (
-                f.filepath LIKE '%%spring-maps%%'
-        )
-        GROUP BY h.md5");
-	$i = 0;
-	while ($row = db_fetch_array($res)) {
-		$path = $row['filepath'];
-	        $url = "http://springfiles.com/" . $path;
-	        _file_mirror_notify_upq($url);
-		$i++;
-	}
-        watchdog('file_mirror', "done with ". $i . " files");
 }
 
