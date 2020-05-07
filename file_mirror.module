@@ -1,7 +1,6 @@
 <?php
 // Download files from remote ftp and create nodes for every file.
 // Load module libraries
-require_once ( dirname(__FILE__) . '/includes/file_mirror.xmlrpc.inc');
 define('MIRROR_PATH', 'sites/default/files/downloads/spring/'); //path with files that will be mirrored
 
 function file_mirror_menu() {
@@ -170,23 +169,11 @@ function _file_mirror_getfiles($lastid)
 */
 function file_mirror_xmlrpc(){
 	$methods[] = array(
-			'springfiles.getlastsyncid',
-			'_file_mirror_getlastsyncid',
-			array('string', 'string', 'string'), //return int, username, password
-	);
-
-	$methods[] = array(
 			'springfiles.getfiles',
 			'_file_mirror_getfiles',
 			array("int", 'array'), //list of files
 			t('returns the highest sync id, takes username + password as argument'),
 	);
-	$methods[] = array(
-			'springfiles.sync',
-			'_file_mirror_sync',
-			array("string", "string", "string", "array"), //return string, username, password, metadata
-			t("handles update/delete calls from upq"),
-		);
 	return $methods;
 }
 
