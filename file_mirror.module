@@ -130,11 +130,10 @@ function file_mirror_get_fid_mirrors($fid) {
 	if (count($files) > 0) {
 	foreach($files[0]["mirrors"] as $url) {
 		$host = parse_url($url, PHP_URL_HOST);
-		$country = substr($url, strrpos($url, '.') + 1);
-		if ($country == "com") {
-			$country = "NL";
-		} else {
+		if ($host == "spring1.admin-box.com") {
 			$country = "DE";
+		} else {
+			$country = "NL";
 		}
 		$array[] = (object) [
 			"title" => $host,
